@@ -1026,8 +1026,8 @@
                             address: `${lat}, ${lng}` 
                         });
                     },
-                    () => resolve({ lat: '0', lng: '0', address: '定位失败' }),
-                    { enableHighAccuracy: true, timeout: 10000 }
+                    err => { console.log('定位错误:', err.code, err.message); resolve({ lat: '0', lng: '0', address: '定位失败-请允许权限' }); },
+                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
                 );
             });
         }
