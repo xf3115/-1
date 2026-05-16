@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a0a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <title>凡人修仙传2D</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(180deg, #0a0520 0%, #1a0a2e 50%, #2d1b4e 100%);
+            min-height: 100vh;
+            color: #e8d5b7;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* 顶部状态栏 */
+        .status-bar {
+            background: linear-gradient(180deg, rgba(30, 20, 60, 0.95) 0%, rgba(20, 10, 40, 0.9) 100%);
+            border-bottom: 2px solid #c9a227;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 100;
+        }
+
+        .player-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid #c9a227;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .player-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .player-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .player-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .player-realm {
+            font-size: 12px;
+            color: #b8a0d0;
+            margin-top: 2px;
+        }
+
+        .stat-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+        }
+
+        .stat-bar {
+            height: 14px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 7px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            border-radius: 7px;
+            transition: width 0.3s ease;
+        }
+
+        .hp-bar {
+            background: linear-gradient(90deg, #8b0000 0%, #ff4444 100%);
+            box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+        }
+
+        .mp-bar {
+            background: linear-gradient(90deg, #000080 0%, #4169e1 100%);
+            box-shadow: 0 0 10px rgba(65, 105, 225, 0.5);
+        }
+
+        .stat-text {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .spirit-stones {
+            font-size: 14px;
+            color: #ffd700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        /* 游戏画面区 */
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            min-height: 400px;
+        }
+
+        /* 战斗场景 */
+        .battle-scene {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            position: relative;
+            background: linear-gradient(180deg, 
+                rgba(20, 10, 50, 0.9) 0%, 
+                rgba(40, 20, 80, 0.8) 40%,
+                rgba(60, 30, 100, 0.7) 100%);
+        }
+
+        .battle-bg {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            background: linear-gradient(180deg, transparent 0%, rgba(30, 50, 80, 0.3) 100%);
+        }
+
+        .battle-bg::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse 80% 50% at 50% 100%, rgba(40, 60, 100, 0.4) 0%, transparent 70%),
+                linear-gradient(180deg, transparent 0%, rgba(20, 30, 50, 0.5) 100%);
+        }
+
+        .character-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .character-wrapper {
+            position: relative;
+        }
+
+        .character {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid #c9a227;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(201, 162, 39, 0.4), inset 0 0 20px rgba(201, 162, 39, 0.2);
+            transition: transform 0.1s;
+        }
+
+        .character.shake {
+            animation: shake 0.3s ease-in-out;
+        }
+
+        .character.damage {
+            animation: damage-flash 0.3s ease-in-out;
+        }
+
+        .character.hurt {
+            animation: hurt-shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px) rotate(-2deg); }
+            75% { transform: translateX(8px) rotate(2deg); }
+        }
+
+        @keyframes damage-flash {
+            0%, 100% { border-color: #c9a227; }
+            50% { border-color: #ff4444; box-shadow: 0 0 40px rgba(255, 68, 68, 0.8); }
+        }
+
+        @keyframes hurt-shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-5px); }
+            40% { transform: translateX(5px); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(3px); }
+        }
+
+        .character img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .character-hp-bar {
+            width: 100px;
+            height: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 5px;
+            margin-top: 10px;
+            overflow: hidden;
+            border: 1px solid #555;
+        }
+
+        .character-hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8b0000, #ff4444);
+            transition: width 0.3s;
+        }
+
+        .character-name {
+            margin-top: 8px;
+            font-size: 14px;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .partner-container {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-70%);
+        }
+
+        .partner-container .character {
+            width: 80px;
+            height: 80px;
+            border-width: 3px;
+        }
+
+        .partner-container .character-hp-bar {
+            width: 70px;
+        }
+
+        .partner-container .character-name {
+            font-size: 12px;
+        }
+
+        .skill-effects {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .skill-effect {
+            position: absolute;
+            font-size: 40px;
+            animation: fly-across 0.8s ease-in-out forwards;
+        }
+
+        @keyframes fly-across {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: translate(-30%, -50%) scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(50%, -50%) scale(0.8);
+            }
+        }
+
+        .damage-number {
+            position: absolute;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            animation: float-up 1s ease-out forwards;
+            z-index: 30;
+        }
+
+        .damage-number.crit {
+            color: #ff6b35;
+            font-size: 30px;
+        }
+
+        .damage-number.normal {
+            color: #ff4444;
+        }
+
+        .damage-number.heal {
+            color: #44ff44;
+        }
+
+        @keyframes float-up {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: translateY(-30px) scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-60px) scale(0.8);
+            }
+        }
+
+        /* 修炼场景 */
+        .cultivate-scene {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: linear-gradient(180deg, 
+                rgba(10, 5, 30, 0.95) 0%, 
+                rgba(30, 15, 60, 0.9) 50%,
+                rgba(50, 25, 80, 0.85) 100%);
+        }
+
+        .cultivate-character {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 5px solid #c9a227;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(201, 162, 39, 0.5);
+            position: relative;
+            z-index: 10;
+        }
+
+        .cultivate-character img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .spirit-particles {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        .spirit-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: radial-gradient(circle, #00ffff, #0088ff);
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00ffff, 0 0 20px #0088ff;
+            animation: orbit 3s linear infinite;
+        }
+
+        @keyframes orbit {
+            0% {
+                transform: rotate(0deg) translateX(80px) rotate(0deg);
+                opacity: 0.8;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: rotate(360deg) translateX(80px) rotate(-360deg);
+                opacity: 0.8;
+            }
+        }
+
+        .cultivate-info {
+            margin-top: 30px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .cultivate-progress {
+            width: 200px;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #c9a227;
+            margin-top: 10px;
+        }
+
+        .cultivate-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4169e1, #00ffff);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            transition: width 0.3s;
+        }
+
+        .realm-break-btn {
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: linear-gradient(180deg, #8b4513, #654321);
+            border: 2px solid #c9a227;
+            border-radius: 25px;
+            color: #ffd700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .realm-break-btn:hover {
+            background: linear-gradient(180deg, #a0522d, #8b4513);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .realm-break-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 探索场景 */
+        .explore-scene {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            background: linear-gradient(180deg, 
+                rgba(10, 20, 40, 0.95) 0%, 
+                rgba(20, 40, 60, 0.9) 100%);
+        }
+
+        .map-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .map-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(30, 20, 50, 0.8);
+            border: 2px solid #555;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .map-item:hover, .map-item.active {
+            border-color: #c9a227;
+            box-shadow: 0 0 15px rgba(201, 162, 39, 0.3);
+        }
+
+        .map-item.locked {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .map-icon {
+            font-size: 30px;
+        }
+
+        .map-info {
+            flex: 1;
+        }
+
+        .map-name {
+            font-size: 16px;
+            color: #ffd700;
+        }
+
+        .map-level {
+            font-size: 12px;
+            color: #b8a0d0;
+            margin-top: 4px;
+        }
+
+        .explore-btn {
+            padding: 10px 20px;
+            background: linear-gradient(180deg, #2e8b57, #1e6b47);
+            border: 2px solid #3cb371;
+            border-radius: 20px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* 背包场景 */
+        .backpack-scene {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            background: linear-gradient(180deg, 
+                rgba(20, 15, 35, 0.95) 0%, 
+                rgba(35, 25, 55, 0.9) 100%);
+        }
+
+        .item-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .item-slot {
+            aspect-ratio: 1;
+            background: rgba(30, 20, 50, 0.8);
+            border: 2px solid #555;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .item-icon {
+            font-size: 28px;
+        }
+
+        .item-count {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            font-size: 12px;
+            color: #ffd700;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 2px 5px;
+            border-radius: 8px;
+        }
+
+        /* 剧情场景 */
+        .story-scene {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            background: linear-gradient(180deg, 
+                rgba(15, 10, 30, 0.95) 0%, 
+                rgba(25, 15, 45, 0.9) 100%);
+        }
+
+        .story-content {
+            flex: 1;
+            padding: 20px;
+            background: rgba(20, 15, 35, 0.8);
+            border: 2px solid #555;
+            border-radius: 15px;
+            font-size: 14px;
+            line-height: 1.8;
+            overflow-y: auto;
+        }
+
+        .story-title {
+            font-size: 18px;
+            color: #ffd700;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        /* 战斗日志 */
+        .battle-log {
+            background: rgba(10, 5, 25, 0.9);
+            border-top: 2px solid #c9a227;
+            padding: 10px 15px;
+            max-height: 80px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            font-size: 12px;
+            color: #b8a0d0;
+            margin-bottom: 4px;
+        }
+
+        .log-entry.damage {
+            color: #ff6b6b;
+        }
+
+        .log-entry.heal {
+            color: #6bff6b;
+        }
+
+        .log-entry.skill {
+            color: #6b9fff;
+        }
+
+        /* 底部操作区 */
+        .action-bar {
+            background: linear-gradient(0deg, rgba(20, 10, 40, 0.98) 0%, rgba(30, 15, 50, 0.95) 100%);
+            border-top: 2px solid #c9a227;
+            padding: 10px;
+        }
+
+        .skill-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .skill-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 5px;
+            background: linear-gradient(180deg, #3d2a5c 0%, #2a1a4a 100%);
+            border: 2px solid #6b4c9a;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .skill-btn:hover:not(:disabled) {
+            border-color: #c9a227;
+            box-shadow: 0 0 15px rgba(201, 162, 39, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .skill-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .skill-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .skill-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .skill-name {
+            font-size: 10px;
+            color: #e8d5b7;
+            text-align: center;
+        }
+
+        .skill-cost {
+            font-size: 9px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .tab-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .tab-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 5px;
+            background: linear-gradient(180deg, #2a1a4a 0%, #1a0a3a 100%);
+            border: 2px solid #4a2c7a;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover, .tab-btn.active {
+            border-color: #c9a227;
+            box-shadow: 0 0 15px rgba(201, 162, 39, 0.3);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(180deg, #3d2a5c 0%, #2a1a4a 100%);
+        }
+
+        .tab-icon {
+            font-size: 22px;
+            margin-bottom: 4px;
+        }
+
+        .tab-name {
+            font-size: 11px;
+            color: #b8a0d0;
+        }
+
+        /* 提示弹窗 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: linear-gradient(180deg, #2a1a4a 0%, #1a0a3a 100%);
+            border: 3px solid #c9a227;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 350px;
+            text-align: center;
+            transform: scale(0.8);
+            transition: transform 0.3s;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            color: #ffd700;
+            margin-bottom: 15px;
+        }
+
+        .modal-text {
+            font-size: 14px;
+            color: #e8d5b7;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .modal-btn {
+            padding: 12px 40px;
+            background: linear-gradient(180deg, #8b4513 0%, #654321 100%);
+            border: 2px solid #c9a227;
+            border-radius: 25px;
+            color: #ffd700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-btn:hover {
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        /* 胜利/失败特效 */
+        .victory-overlay, .defeat-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 500;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s;
+        }
+
+        .victory-overlay.show {
+            opacity: 1;
+            visibility: visible;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, rgba(0, 0, 0, 0.8) 100%);
+        }
+
+        .defeat-overlay.show {
+            opacity: 1;
+            visibility: visible;
+            background: radial-gradient(circle, rgba(139, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.8) 100%);
+        }
+
+        .result-text {
+            font-size: 48px;
+            font-weight: bold;
+            text-shadow: 0 0 30px currentColor;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        .victory-overlay .result-text {
+            color: #ffd700;
+        }
+
+        .defeat-overlay .result-text {
+            color: #ff4444;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* 加载动画 */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #0a0520;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            transition: opacity 0.5s;
+        }
+
+        .loading.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-title {
+            font-size: 28px;
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            margin-bottom: 30px;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(201, 162, 39, 0.3);
+            border-top-color: #c9a227;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 动画效果类 */
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .glow-animation {
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 20px rgba(201, 162, 39, 0.3); }
+            100% { box-shadow: 0 0 40px rgba(201, 162, 39, 0.6); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载界面 -->
+    <div class="loading" id="loading">
+        <div class="loading-title">凡人修仙传</div>
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="game-container">
+        <!-- 顶部状态栏 -->
+        <div class="status-bar">
+            <div class="player-avatar">
+                <img src="https://s.coze.cn/image/UgVSRZXvgaw/" alt="韩立">
+            </div>
+            <div class="player-info">
+                <div class="player-name">韩立</div>
+                <div class="player-realm" id="realmDisplay">练气期</div>
+                <div class="stat-bars">
+                    <div class="stat-bar">
+                        <div class="stat-bar-fill hp-bar" id="hpBar" style="width: 100%"></div>
+                        <span class="stat-text" id="hpText">100/100</span>
+                    </div>
+                    <div class="stat-bar">
+                        <div class="stat-bar-fill mp-bar" id="mpBar" style="width: 100%"></div>
+                        <span class="stat-text" id="mpText">100/100</span>
+                    </div>
+                </div>
+            </div>
+            <div class="spirit-stones">
+                <span>💎</span>
+                <span id="spiritStones">0</span>
+            </div>
+        </div>
+
+        <!-- 游戏画面区 -->
+        <div class="game-area" id="gameArea">
+            <!-- 战斗场景 -->
+            <div class="battle-scene" id="battleScene" style="display: none;">
+                <div class="battle-bg"></div>
+                
+                <!-- 南宫婉（如果在场） -->
+                <div class="partner-container" id="partnerContainer" style="display: none;">
+                    <div class="character-wrapper">
+                        <div class="character" id="partnerChar">
+                            <img src="https://s.coze.cn/image/HnHGBFBvVP0/" alt="南宫婉">
+                        </div>
+                        <div class="character-hp-bar">
+                            <div class="character-hp-fill" id="partnerHpBar" style="width: 100%"></div>
+                        </div>
+                        <div class="character-name">南宫婉</div>
+                    </div>
+                </div>
+
+                <!-- 韩立 -->
+                <div class="character-container">
+                    <div class="character-wrapper">
+                        <div class="character" id="playerChar">
+                            <img src="https://s.coze.cn/image/UgVSRZXvgaw/" alt="韩立">
+                        </div>
+                        <div class="character-hp-bar">
+                            <div class="character-hp-fill" id="playerHpBar" style="width: 100%"></div>
+                        </div>
+                        <div class="character-name">韩立</div>
+                    </div>
+                </div>
+
+                <!-- 技能特效层 -->
+                <div class="skill-effects" id="skillEffects"></div>
+
+                <!-- 怪物 -->
+                <div class="character-container" id="enemyContainer">
+                    <div class="character-wrapper">
+                        <div class="character" id="enemyChar">
+                            <img src="https://s.coze.cn/image/3wZ88YVm5ls/" alt="妖兽">
+                        </div>
+                        <div class="character-hp-bar">
+                            <div class="character-hp-fill" id="enemyHpBar" style="width: 100%"></div>
+                        </div>
+                        <div class="character-name" id="enemyName">青背苍狼</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 修炼场景 -->
+            <div class="cultivate-scene" id="cultivateScene">
+                <div class="spirit-particles" id="spiritParticles"></div>
+                <div class="cultivate-character">
+                    <img src="https://s.coze.cn/image/UgVSRZXvgaw/" alt="韩立">
+                </div>
+                <div class="cultivate-info">
+                    <div class="player-realm" id="cultivateRealm">练气期</div>
+                    <div class="cultivate-progress">
+                        <div class="cultivate-progress-fill" id="cultivateProgress" style="width: 0%"></div>
+                    </div>
+                    <div id="cultivateText">修炼进度: 0%</div>
+                    <button class="realm-break-btn" id="breakthroughBtn" onclick="breakthrough()">
+                        突破境界
+                    </button>
+                </div>
+            </div>
+
+            <!-- 探索场景 -->
+            <div class="explore-scene" id="exploreScene" style="display: none;">
+                <h3 style="color: #ffd700; margin-bottom: 15px;">地图探索</h3>
+                <div class="map-list" id="mapList"></div>
+            </div>
+
+            <!-- 背包场景 -->
+            <div class="backpack-scene" id="backpackScene" style="display: none;">
+                <h3 style="color: #ffd700; margin-bottom: 15px;">背包</h3>
+                <div class="item-grid" id="itemGrid"></div>
+            </div>
+
+            <!-- 剧情场景 -->
+            <div class="story-scene" id="storyScene" style="display: none;">
+                <div class="story-content" id="storyContent">
+                    <div class="story-title">第一章 七玄门</div>
+                    <p>韩立来到七玄门，踏上修仙之路。这里是他命运的起点...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 战斗日志 -->
+        <div class="battle-log" id="battleLog" style="display: none;">
+            <div class="log-entry">战斗开始！</div>
+        </div>
+
+        <!-- 底部操作区 -->
+        <div class="action-bar" id="actionBar">
+            <!-- 技能按钮（战斗时显示） -->
+            <div class="skill-buttons" id="skillButtons" style="display: none;">
+                <button class="skill-btn" onclick="useSkill(0)">
+                    <span class="skill-icon">⚔️</span>
+                    <span class="skill-name">飞剑术</span>
+                    <span class="skill-cost">10灵力</span>
+                </button>
+                <button class="skill-btn" onclick="useSkill(1)">
+                    <span class="skill-icon">🐛</span>
+                    <span class="skill-name">噬金虫</span>
+                    <span class="skill-cost">25灵力</span>
+                </button>
+                <button class="skill-btn" onclick="useSkill(2)">
+                    <span class="skill-icon">🛡️</span>
+                    <span class="skill-name">灵光盾</span>
+                    <span class="skill-cost">15灵力</span>
+                </button>
+                <button class="skill-btn" onclick="useSkill(3)">
+                    <span class="skill-icon">💊</span>
+                    <span class="skill-name">服丹</span>
+                    <span class="skill-cost">1丹药</span>
+                </button>
+            </div>
+
+            <!-- Tab按钮（非战斗时显示） -->
+            <div class="tab-buttons" id="tabButtons">
+                <button class="tab-btn active" onclick="switchTab('cultivate')">
+                    <span class="tab-icon">🧘</span>
+                    <span class="tab-name">修炼</span>
+                </button>
+                <button class="tab-btn" onclick="switchTab('explore')">
+                    <span class="tab-icon">🗺️</span>
+                    <span class="tab-name">探索</span>
+                </button>
+                <button class="tab-btn" onclick="switchTab('backpack')">
+                    <span class="tab-icon">🎒</span>
+                    <span class="tab-name">背包</span>
+                </button>
+                <button class="tab-btn" onclick="switchTab('story')">
+                    <span class="tab-icon">📜</span>
+                    <span class="tab-name">剧情</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提示弹窗 -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-title" id="modalTitle">提示</div>
+            <div class="modal-text" id="modalText"></div>
+            <button class="modal-btn" onclick="closeModal()">确定</button>
+        </div>
+    </div>
+
+    <!-- 胜利/失败特效 -->
+    <div class="victory-overlay" id="victoryOverlay">
+        <div class="result-text">胜利！</div>
+    </div>
+
+    <div class="defeat-overlay" id="defeatOverlay">
+        <div class="result-text">败北...</div>
+    </div>
+
+    <script>
+        // ==================== 游戏数据 ====================
+        const REALMS = [
+            { name: '练气期', expNeeded: 100, spirit: 50 },
+            { name: '筑基期', expNeeded: 300, spirit: 100 },
+            { name: '结丹期', expNeeded: 1000, spirit: 200 },
+            { name: '元婴期', expNeeded: 3000, spirit: 500 },
+            { name: '化神期', expNeeded: 10000, spirit: 1000 },
+            { name: '合体期', expNeeded: 30000, spirit: 2000 },
+            { name: '大乘期', expNeeded: 100000, spirit: 5000 },
+            { name: '渡劫期', expNeeded: 300000, spirit: 10000 },
+            { name: '真仙境', expNeeded: 999999, spirit: 99999 }
+        ];
+
+        const MAPS = [
+            { id: 'qixuan', name: '七玄门', level: 1, monsters: ['青背苍狼'], rewards: { spirit: 10, pill: 1 } },
+            { id: 'tainangu', name: '太南谷', level: 5, monsters: ['金背妖螂', '青背苍狼'], rewards: { spirit: 30, pill: 2 } },
+            { id: 'luanxing', name: '乱星海', level: 15, monsters: ['金背妖螂', '木魁树妖'], rewards: { spirit: 80, pill: 3 } },
+            { id: 'zhuiyu', name: '坠魔谷', level: 30, monsters: ['木魁树妖'], rewards: { spirit: 200, pill: 5 } },
+            { id: 'lingjie', name: '灵界', level: 50, monsters: ['木魁树妖', '金背妖螂'], rewards: { spirit: 500, pill: 10 } }
+        ];
+
+        const MONSTERS = {
+            '青背苍狼': { hp: 50, attack: 8, exp: 20, spirit: 15, icon: 'https://s.coze.cn/image/3wZ88YVm5ls/' },
+            '金背妖螂': { hp: 100, attack: 15, exp: 50, spirit: 40, icon: 'https://s.coze.cn/image/iFXjVWgH19w/' },
+            '木魁树妖': { hp: 200, attack: 25, exp: 100, spirit: 100, icon: 'https://s.coze.cn/image/7x-XzPT2RlU/' }
+        };
+
+        const SKILLS = [
+            { name: '飞剑术', icon: '⚔️', cost: 10, damage: 15, type: 'attack' },
+            { name: '噬金虫', icon: '🐛', cost: 25, damage: 25, type: 'crit' },
+            { name: '灵光盾', icon: '🛡️', cost: 15, damage: 0, type: 'defense' },
+            { name: '服丹', icon: '💊', cost: 1, damage: 0, type: 'heal' }
+        ];
+
+        const ITEMS = {
+            pill: { name: '丹药', icon: '💊' },
+            breakthroughPill: { name: '突破丹', icon: '🌟' },
+            spiritStone: { name: '灵石', icon: '💎' }
+        };
+
+        // ==================== 游戏状态 ====================
+        let gameState = {
+            player: {
+                name: '韩立',
+                hp: 100,
+                maxHp: 100,
+                mp: 100,
+                maxMp: 100,
+                level: 1,
+                exp: 0,
+                realmIndex: 0,
+                spiritStones: 50,
+                items: { pill: 5, breakthroughPill: 1 }
+            },
+            partner: {
+                unlocked: false,
+                hp: 150,
+                maxHp: 150,
+                name: '南宫婉',
+                icon: 'https://s.coze.cn/image/HnHGBFBvVP0/'
+            },
+            battle: {
+                inBattle: false,
+                enemy: null,
+                turn: 'player',
+                shieldActive: false,
+                autoBattle: false
+            },
+            currentMap: 0,
+            cultivationTimer: null,
+            lastSaveTime: Date.now()
+        };
+
+        // ==================== 初始化 ====================
+        function init() {
+            loadGame();
+            createSpiritParticles();
+            updateUI();
+            updateMaps();
+            updateBackpack();
+
+            // 检查是否解锁南宫婉
+            if (gameState.player.realmIndex >= 2) {
+                gameState.partner.unlocked = true;
+            }
+
+            // 开始挂机修炼
+            startCultivation();
+
+            // 隐藏加载界面
+            setTimeout(() => {
+                document.getElementById('loading').classList.add('hide');
+            }, 1500);
+
+            // 定时保存
+            setInterval(saveGame, 30000);
+        }
+
+        // ==================== UI更新 ====================
+        function updateUI() {
+            const p = gameState.player;
+            
+            // 顶部状态栏
+            document.getElementById('realmDisplay').textContent = REALMS[p.realmIndex].name;
+            document.getElementById('hpBar').style.width = `${(p.hp / p.maxHp) * 100}%`;
+            document.getElementById('hpText').textContent = `${p.hp}/${p.maxHp}`;
+            document.getElementById('mpBar').style.width = `${(p.mp / p.maxMp) * 100}%`;
+            document.getElementById('mpText').textContent = `${p.mp}/${p.maxMp}`;
+            document.getElementById('spiritStones').textContent = p.spiritStones;
+
+            // 修炼界面
+            document.getElementById('cultivateRealm').textContent = REALMS[p.realmIndex].name;
+            const progress = (p.exp / REALMS[p.realmIndex].expNeeded) * 100;
+            document.getElementById('cultivateProgress').style.width = `${Math.min(progress, 100)}%`;
+            document.getElementById('cultivateText').textContent = `修炼进度: ${Math.floor(progress)}%`;
+
+            // 突破按钮状态
+            const breakBtn = document.getElementById('breakthroughBtn');
+            breakBtn.disabled = p.items.breakthroughPill < 1;
+            if (p.realmIndex >= REALMS.length - 1) {
+                breakBtn.textContent = '已达最高境界';
+                breakBtn.disabled = true;
+            }
+        }
+
+        function updatePlayerHP() {
+            const p = gameState.player;
+            document.getElementById('hpBar').style.width = `${(p.hp / p.maxHp) * 100}%`;
+            document.getElementById('hpText').textContent = `${p.hp}/${p.maxHp}`;
+            document.getElementById('playerHpBar').style.width = `${(p.hp / p.maxHp) * 100}%`;
+        }
+
+        function updatePartnerHP() {
+            if (gameState.partner.unlocked && gameState.battle.inBattle) {
+                document.getElementById('partnerHpBar').style.width = 
+                    `${(gameState.partner.hp / gameState.partner.maxHp) * 100}%`;
+            }
+        }
+
+        function updateEnemyHP() {
+            if (gameState.battle.enemy) {
+                const e = gameState.battle.enemy;
+                document.getElementById('enemyHpBar').style.width = 
+                    `${(e.currentHp / e.maxHp) * 100}%`;
+            }
+        }
+
+        // ==================== 场景切换 ====================
+        function switchTab(tab) {
+            // 更新tab按钮状态
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.tab-btn').classList.add('active');
+
+            // 切换场景
+            document.getElementById('battleScene').style.display = 'none';
+            document.getElementById('cultivateScene').style.display = 'none';
+            document.getElementById('exploreScene').style.display = 'none';
+            document.getElementById('backpackScene').style.display = 'none';
+            document.getElementById('storyScene').style.display = 'none';
+            document.getElementById('battleLog').style.display = 'none';
+            document.getElementById('skillButtons').style.display = 'none';
+            document.getElementById('tabButtons').style.display = 'grid';
+
+            switch(tab) {
+                case 'cultivate':
+                    document.getElementById('cultivateScene').style.display = 'flex';
+                    break;
+                case 'explore':
+                    document.getElementById('exploreScene').style.display = 'flex';
+                    updateMaps();
+                    break;
+                case 'backpack':
+                    document.getElementById('backpackScene').style.display = 'flex';
+                    updateBackpack();
+                    break;
+                case 'story':
+                    document.getElementById('storyScene').style.display = 'flex';
+                    break;
+            }
+        }
+
+        // ==================== 战斗系统 ====================
+        function startBattle(monsterName) {
+            const monster = MONSTERS[monsterName];
+            if (!monster) return;
+
+            // 切换到战斗场景
+            document.getElementById('battleScene').style.display = 'flex';
+            document.getElementById('battleLog').style.display = 'block';
+            document.getElementById('skillButtons').style.display = 'grid';
+            document.getElementById('tabButtons').style.display = 'none';
+            document.getElementById('cultivateScene').style.display = 'none';
+
+            // 设置敌人
+            gameState.battle.enemy = {
+                name: monsterName,
+                icon: monster.icon,
+                hp: monster.hp,
+                maxHp: monster.hp,
+                attack: monster.attack,
+                exp: monster.exp,
+                spirit: monster.spirit
+            };
+
+            // 更新敌人显示
+            document.getElementById('enemyChar').querySelector('img').src = monster.icon;
+            document.getElementById('enemyName').textContent = monsterName;
+            document.getElementById('enemyHpBar').style.width = '100%';
+
+            // 如果南宫婉已解锁，显示她
+            if (gameState.partner.unlocked) {
+                document.getElementById('partnerContainer').style.display = 'block';
+                gameState.partner.hp = gameState.partner.maxHp;
+                updatePartnerHP();
+            }
+
+            // 开始战斗
+            gameState.battle.inBattle = true;
+            gameState.battle.turn = 'player';
+            gameState.battle.shieldActive = false;
+
+            addBattleLog(`${monsterName}出现了！`);
+            
+            // 自动战斗
+            autoBattle();
+        }
+
+        function autoBattle() {
+            if (!gameState.battle.inBattle) return;
+
+            if (gameState.battle.turn === 'player') {
+                // 玩家回合 - 随机使用技能
+                const availableSkills = SKILLS.filter((skill, i) => {
+                    if (i === 3) return gameState.player.items.pill > 0;
+                    return gameState.player.mp >= skill.cost;
+                });
+
+                if (availableSkills.length > 0) {
+                    const skillIndex = SKILLS.indexOf(availableSkills[Math.floor(Math.random() * availableSkills.length)]);
+                    useSkill(skillIndex);
+                }
+            } else {
+                // 敌人回合
+                setTimeout(() => {
+                    enemyAttack();
+                }, 800);
+            }
+        }
+
+        function useSkill(skillIndex) {
+            if (!gameState.battle.inBattle) return;
+            
+            const skill = SKILLS[skillIndex];
+            
+            // 检查资源
+            if (skillIndex === 3) {
+                if (gameState.player.items.pill <= 0) {
+                    showModal('提示', '没有丹药了！');
+                    return;
+                }
+            } else {
+                if (gameState.player.mp < skill.cost) {
+                    addBattleLog('灵力不足！');
+                    return;
+                }
+            }
+
+            // 消耗资源
+            if (skillIndex === 3) {
+                gameState.player.items.pill--;
+            } else {
+                gameState.player.mp -= skill.cost;
+            }
+
+            // 显示技能特效
+            showSkillEffect(skill.icon);
+
+            // 执行技能效果
+            setTimeout(() => {
+                switch(skill.type) {
+                    case 'attack':
+                        dealDamage(skill.damage, false);
+                        break;
+                    case 'crit':
+                        dealDamage(skill.damage, true);
+                        break;
+                    case 'defense':
+                        gameState.battle.shieldActive = true;
+                        addBattleLog('韩立开启了灵光盾！');
+                        break;
+                    case 'heal':
+                        const healAmount = Math.floor(gameState.player.maxHp * 0.5);
+                        gameState.player.hp = Math.min(gameState.player.hp + healAmount, gameState.player.maxHp);
+                        showDamageNumber(healAmount, 'heal', 'player');
+                        addBattleLog(`韩立服用丹药恢复了 ${healAmount} HP！`, 'heal');
+                        break;
+                }
+
+                updatePlayerHP();
+                updateUI();
+
+                // 切换到敌人回合
+                if (checkBattleEnd()) return;
+                
+                gameState.battle.turn = 'enemy';
+                setTimeout(autoBattle, 1000);
+            }, 500);
+        }
+
+        function dealDamage(baseDamage, isCrit) {
+            let damage = isCrit ? baseDamage * 1.5 : baseDamage;
+            damage = Math.floor(damage + (gameState.player.level * 2));
+            
+            gameState.battle.enemy.currentHp -= damage;
+            
+            // 敌人受伤动画
+            const enemyChar = document.getElementById('enemyChar');
+            enemyChar.classList.add('hurt');
+            setTimeout(() => enemyChar.classList.remove('hurt'), 400);
+
+            showDamageNumber(damage, isCrit ? 'crit' : 'normal', 'enemy');
+            addBattleLog(`韩立使用技能造成了 ${damage} 点伤害！`, 'damage');
+
+            updateEnemyHP();
+        }
+
+        function enemyAttack() {
+            if (!gameState.battle.inBattle || !gameState.battle.enemy) return;
+
+            const enemy = gameState.battle.enemy;
+            let damage = Math.floor(enemy.attack + (enemy.attack * 0.3 * Math.random()));
+
+            // 检查是否有护盾
+            if (gameState.battle.shieldActive) {
+                damage = Math.floor(damage * 0.5);
+                addBattleLog(`灵光盾抵挡了部分伤害！`);
+                gameState.battle.shieldActive = false;
+            }
+
+            // 随机攻击玩家或南宫婉
+            let target = 'player';
+            if (gameState.partner.unlocked && Math.random() > 0.5) {
+                target = 'partner';
+                gameState.partner.hp -= damage;
+                updatePartnerHP();
+                showDamageNumber(damage, 'normal', 'partner');
+            } else {
+                gameState.player.hp -= damage;
+                updatePlayerHP();
+                showDamageNumber(damage, 'normal', 'player');
+            }
+
+            const targetName = target === 'partner' ? '南宫婉' : '韩立';
+            addBattleLog(`${enemy.name}攻击了${targetName}，造成了 ${damage} 点伤害！`, 'damage');
+
+            // 角色受伤动画
+            const charElement = document.getElementById(target === 'partner' ? 'partnerChar' : 'playerChar');
+            charElement.classList.add('damage');
+            setTimeout(() => charElement.classList.remove('damage'), 300);
+
+            updateUI();
+
+            // 检查战斗结束
+            if (checkBattleEnd()) return;
+
+            // 切换到玩家回合
+            gameState.battle.turn = 'player';
+            setTimeout(autoBattle, 1000);
+        }
+
+        function checkBattleEnd() {
+            // 检查敌人是否死亡
+            if (gameState.battle.enemy && gameState.battle.enemy.currentHp <= 0) {
+                battleVictory();
+                return true;
+            }
+
+            // 检查玩家是否死亡
+            if (gameState.player.hp <= 0) {
+                battleDefeat();
+                return true;
+            }
+
+            // 检查南宫婉是否死亡
+            if (gameState.partner.unlocked && gameState.partner.hp <= 0) {
+                addBattleLog('南宫婉倒下了！');
+                document.getElementById('partnerContainer').style.display = 'none';
+                gameState.partner.hp = 0;
+            }
+
+            return false;
+        }
+
+        function battleVictory() {
+            gameState.battle.inBattle = false;
+            const enemy = gameState.battle.enemy;
+
+            // 获得奖励
+            gameState.player.exp += enemy.exp;
+            gameState.player.spiritStones += enemy.spirit;
+            
+            // 随机掉落丹药
+            if (Math.random() > 0.5) {
+                gameState.player.items.pill += 1;
+                addBattleLog(`获得了1个丹药！`);
+            }
+
+            // 恢复HP和MP
+            gameState.player.hp = gameState.player.maxHp;
+            gameState.player.mp = gameState.player.maxMp;
+
+            addBattleLog(`战胜了${enemy.name}！获得${enemy.exp}经验、${enemy.spirit}灵石！`);
+
+            // 显示胜利特效
+            document.getElementById('victoryOverlay').classList.add('show');
+            setTimeout(() => {
+                document.getElementById('victoryOverlay').classList.remove('show');
+                returnToNormal();
+            }, 2000);
+
+            updateUI();
+            saveGame();
+        }
+
+        function battleDefeat() {
+            gameState.battle.inBattle = false;
+
+            addBattleLog('韩立败北了...');
+
+            // 显示失败特效
+            document.getElementById('defeatOverlay').classList.add('show');
+            setTimeout(() => {
+                document.getElementById('defeatOverlay').classList.remove('show');
+                
+                // 恢复少量HP
+                gameState.player.hp = Math.floor(gameState.player.maxHp * 0.3);
+                gameState.player.mp = Math.floor(gameState.player.maxMp * 0.5);
+                
+                returnToNormal();
+            }, 2000);
+
+            updateUI();
+            saveGame();
+        }
+
+        function returnToNormal() {
+            document.getElementById('battleScene').style.display = 'none';
+            document.getElementById('battleLog').style.display = 'none';
+            document.getElementById('skillButtons').style.display = 'none';
+            document.getElementById('tabButtons').style.display = 'grid';
+            document.getElementById('cultivateScene').style.display = 'flex';
+            document.getElementById('partnerContainer').style.display = 'none';
+            
+            // 重置南宫婉HP用于下次战斗
+            if (gameState.partner.unlocked) {
+                gameState.partner.hp = gameState.partner.maxHp;
+            }
+        }
+
+        // ==================== 视觉效果 ====================
+        function showSkillEffect(icon) {
+            const effects = document.getElementById('skillEffects');
+            const effect = document.createElement('div');
+            effect.className = 'skill-effect';
+            effect.textContent = icon;
+            effects.appendChild(effect);
+
+            setTimeout(() => effect.remove(), 800);
+        }
+
+        function showDamageNumber(damage, type, target) {
+            const gameArea = document.getElementById('gameArea');
+            const damageEl = document.createElement('div');
+            damageEl.className = `damage-number ${type}`;
+            damageEl.textContent = type === 'heal' ? `+${damage}` : `-${damage}`;
+
+            // 位置
+            if (target === 'enemy') {
+                damageEl.style.right = '80px';
+                damageEl.style.top = '40%';
+            } else if (target === 'partner') {
+                damageEl.style.left = '80px';
+                damageEl.style.top = '30%';
+            } else {
+                damageEl.style.left = '40%';
+                damageEl.style.top = '40%';
+            }
+
+            gameArea.appendChild(damageEl);
+            setTimeout(() => damageEl.remove(), 1000);
+        }
+
+        function addBattleLog(message, type = '') {
+            const log = document.getElementById('battleLog');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = message;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+
+            // 限制日志数量
+            while (log.children.length > 20) {
+                log.removeChild(log.firstChild);
+            }
+        }
+
+        function createSpiritParticles() {
+            const container = document.getElementById('spiritParticles');
+            for (let i = 0; i < 8; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'spirit-particle';
+                particle.style.animationDelay = `${i * 0.375}s`;
+                container.appendChild(particle);
+            }
+        }
+
+        // ==================== 修炼系统 ====================
+        function startCultivation() {
+            if (gameState.cultivationTimer) {
+                clearInterval(gameState.cultivationTimer);
+            }
+
+            gameState.cultivationTimer = setInterval(() => {
+                if (!gameState.battle.inBattle) {
+                    // 获得经验
+                    const expGain = 1 + Math.floor(gameState.player.level * 0.5);
+                    gameState.player.exp += expGain;
+
+                    // 恢复灵力
+                    if (gameState.player.mp < gameState.player.maxMp) {
+                        gameState.player.mp = Math.min(gameState.player.mp + 2, gameState.player.maxMp);
+                    }
+
+                    updateUI();
+                }
+            }, 1000);
+        }
+
+        function breakthrough() {
+            if (gameState.player.items.breakthroughPill < 1) {
+                showModal('提示', '没有突破丹！');
+                return;
+            }
+
+            if (gameState.player.realmIndex >= REALMS.length - 1) {
+                showModal('提示', '已达最高境界！');
+                return;
+            }
+
+            gameState.player.items.breakthroughPill--;
+            gameState.player.realmIndex++;
+
+            // 更新属性
+            const newRealm = REALMS[gameState.player.realmIndex];
+            gameState.player.maxHp += 50;
+            gameState.player.maxMp += 30;
+            gameState.player.hp = gameState.player.maxHp;
+            gameState.player.mp = gameState.player.maxMp;
+            gameState.player.level++;
+
+            // 检查是否解锁南宫婉
+            if (gameState.player.realmIndex >= 2 && !gameState.partner.unlocked) {
+                gameState.partner.unlocked = true;
+                showModal('境界突破！', `恭喜突破到${newRealm.name}！<br><br>南宫婉加入了战斗！`);
+            } else {
+                showModal('境界突破！', `恭喜突破到${newRealm.name}！<br>生命值+50，灵力+30！`);
+            }
+
+            updateUI();
+            saveGame();
+        }
+
+        // ==================== 探索系统 ====================
+        function updateMaps() {
+            const mapList = document.getElementById('mapList');
+            mapList.innerHTML = '';
+
+            MAPS.forEach((map, index) => {
+                const isUnlocked = index <= gameState.player.realmIndex;
+                const isActive = gameState.currentMap === index;
+
+                const item = document.createElement('div');
+                item.className = `map-item ${isActive ? 'active' : ''} ${!isUnlocked ? 'locked' : ''}`;
+                item.innerHTML = `
+                    <div class="map-icon">${getMapIcon(index)}</div>
+                    <div class="map-info">
+                        <div class="map-name">${map.name}</div>
+                        <div class="map-level">推荐境界: ${REALMS[Math.min(index, REALMS.length-1)].name}</div>
+                    </div>
+                    <button class="explore-btn" ${!isUnlocked ? 'disabled' : ''} onclick="exploreMap(${index})">
+                        ${isUnlocked ? '探索' : '未解锁'}
+                    </button>
+                `;
+                mapList.appendChild(item);
+            });
+        }
+
+        function getMapIcon(index) {
+            const icons = ['🏯', '⛰️', '🌊', '💀', '✨'];
+            return icons[index] || '📍';
+        }
+
+        function exploreMap(mapIndex) {
+            if (gameState.battle.inBattle) return;
+
+            gameState.currentMap = mapIndex;
+            const map = MAPS[mapIndex];
+            
+            // 随机遇敌
+            const monsterName = map.monsters[Math.floor(Math.random() * map.monsters.length)];
+            
+            // 100%遇敌率
+            startBattle(monsterName);
+        }
+
+        // ==================== 背包系统 ====================
+        function updateBackpack() {
+            const grid = document.getElementById('itemGrid');
+            grid.innerHTML = '';
+
+            const items = [
+                { ...ITEMS.pill, count: gameState.player.items.pill },
+                { ...ITEMS.breakthroughPill, count: gameState.player.items.breakthroughPill }
+            ];
+
+            items.forEach(item => {
+                const slot = document.createElement('div');
+                slot.className = 'item-slot';
+                slot.innerHTML = `
+                    <div class="item-icon">${item.icon}</div>
+                    <div class="item-name" style="font-size:10px;color:#b8a0d0">${item.name}</div>
+                    <div class="item-count">${item.count}</div>
+                `;
+                grid.appendChild(slot);
+            });
+
+            // 填充空格子
+            for (let i = items.length; i < 8; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'item-slot';
+                grid.appendChild(slot);
+            }
+        }
+
+        // ==================== 弹窗 ====================
+        function showModal(title, text) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalText').innerHTML = text;
+            document.getElementById('modal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+
+        // ==================== 数据存储 ====================
+        function saveGame() {
+            const saveData = {
+                player: gameState.player,
+                partner: gameState.partner,
+                currentMap: gameState.currentMap,
+                saveTime: Date.now()
+            };
+            localStorage.setItem('xiuxianGame', JSON.stringify(saveData));
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem('xiuxianGame');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    gameState.player = { ...gameState.player, ...data.player };
+                    gameState.partner = { ...gameState.partner, ...data.partner };
+                    gameState.currentMap = data.currentMap || 0;
+
+                    // 计算离线收益
+                    if (data.saveTime) {
+                        const offlineTime = Math.floor((Date.now() - data.saveTime) / 1000);
+                        const maxOfflineTime = 3600; // 最多离线1小时
+                        const actualOffline = Math.min(offlineTime, maxOfflineTime);
+                        
+                        if (actualOffline > 60) {
+                            const expGain = actualOffline * 0.5;
+                            gameState.player.exp += Math.floor(expGain);
+                            showModal('离线收益', `离线${Math.floor(actualOffline/60)}分钟，获得了${Math.floor(expGain)}点经验！`);
+                        }
+                    }
+                } catch (e) {
+                    console.error('加载存档失败:', e);
+                }
+            }
+        }
+
+        // ==================== 启动游戏 ====================
+        window.onload = init;
+    </script>
+</body>
+</html>
