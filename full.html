@@ -562,6 +562,9 @@
             document.getElementById('compassModeBtn').classList.toggle('active', mode === 'compass');
             document.getElementById('manualContent').classList.toggle('active', mode === 'manual');
             document.getElementById('compassContent').classList.toggle('active', mode === 'compass');
+            if (mode === 'compass') {
+                startGyro();
+            }
         }
         
         // 生成罗盘刻度
@@ -680,18 +683,26 @@
             generateTicks();
             updateDisplay();
             
-            // 尝试启用陀螺仪
-            if ('DeviceOrientationEvent' in window) {
-                const isIOS = typeof DeviceOrientationEvent.requestPermission === 'function';
-                if (isIOS) {
-                    try {
-                        const perm = await DeviceOrientationEvent.requestPermission();
-                        if (perm === 'granted') {
-                            window.addEventListener('deviceorientation', handleOrientation);
+            // 陀螺仪在切换到罗盘模式时启动（iOS需要用户点击触发权限请求）
+            let gyroStarted = false;
+            async function startGyro() {
+                if (gyroStarted) return;
+                if ('DeviceOrientationEvent' in window) {
+                    const isIOS = typeof DeviceOrientationEvent.requestPermission === 'function';
+                    if (isIOS) {
+                        try {
+                            const perm = await DeviceOrientationEvent.requestPermission();
+                            if (perm === 'granted') {
+                                window.addEventListener('deviceorientation', handleOrientation);
+                                gyroStarted = true;
+                            }
+                        } catch (e) {
+                            console.log('陀螺仪权限被拒绝');
                         }
-                    } catch (e) {}
-                } else {
-                    window.addEventListener('deviceorientation', handleOrientation);
+                    } else {
+                        window.addEventListener('deviceorientation', handleOrientation);
+                        gyroStarted = true;
+                    }
                 }
             }
         });
