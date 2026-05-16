@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f1923">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>考勤打卡</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        :root {
+            --bg-dark: #0f1923;
+            --card-bg: #1a2634;
+            --text-primary: #ffffff;
+            --text-secondary: #8b9cb3;
+            --success: #00C853;
+            --info: #2196F3;
+            --danger: #f44336;
+            --warning: #ff9800;
+            --gold: #ffd700;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* 封面样式 */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://s.coze.cn/image/a6DQECvgnQU/') center/cover no-repeat;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: opacity 0.5s ease;
+        }
+        
+        .splash-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, rgba(15, 25, 35, 0.95) 0%, rgba(15, 25, 35, 0.6) 50%, rgba(15, 25, 35, 0.3) 100%);
+        }
+        
+        .splash-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            animation: slideUp 1s ease forwards;
+            opacity: 0;
+            transform: translateY(50px);
+        }
+        
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .splash-title {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: var(--gold);
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 215, 0, 0.4);
+            letter-spacing: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .splash-subtitle {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            letter-spacing: 0.3rem;
+        }
+        
+        .splash-hint {
+            position: absolute;
+            bottom: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        
+        /* 主应用容器 */
+        .app-container {
+            display: none;
+            min-height: 100vh;
+            padding-bottom: 70px;
+        }
+        
+        .app-container.active {
+            display: block;
+        }
+        
+        /* Tab 内容区 */
+        .tab-content {
+            display: none;
+            padding: 20px;
+            padding-top: env(safe-area-inset-top, 20px);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* 打卡页 */
+        .clock-header {
+            text-align: center;
+            padding: 20px 0;
+        }
+        
+        .clock-user {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+        
+        .clock-time {
+            font-size: 3.5rem;
+            font-weight: bold;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-primary);
+        }
+        
+        .clock-date {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+        
+        .clock-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 40px 0;
+        }
+        
+        .clock-btn {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .clock-btn .icon {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .clock-btn .label {
+            font-size: 1rem;
+        }
+        
+        .clock-btn .time {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        
+        .clock-btn.on {
+            background: var(--success);
+        }
+        
+        .clock-btn.off {
+            background: var(--info);
+        }
+        
+        .clock-btn.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .clock-btn.completed {
+            transform: scale(0.95);
+        }
+        
+        .clock-btn.completed::after {
+            content: '';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* 脉冲动画 */
+        .clock-btn::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            animation: btnPulse 2s infinite;
+        }
+        
+        .clock-btn.on::before {
+            background: var(--success);
+        }
+        
+        .clock-btn.off::before {
+            background: var(--info);
+        }
+        
+        @keyframes btnPulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(1.3);
+                opacity: 0;
+            }
+        }
+        
+        /* 今日状态卡片 */
+        .today-status {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .today-title {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+        
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .status-row:last-child {
+            border-bottom: none;
+        }
+        
+        .status-label {
+            color: var(--text-secondary);
+        }
+        
+        .status-value {
+            font-weight: bold;
+        }
+        
+        .status-value.success { color: var(--success); }
+        .status-value.danger { color: var(--danger); }
+        .status-value.warning { color: var(--warning); }
+        
+        /* 记录页 */
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .month-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .month-selector button {
+            background: var(--card-bg);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        
+        .month-display {
+            font-size: 1.1rem;
+            min-width: 100px;
+            text-align: center;
+        }
+        
+        .record-list {
+            background: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        
+        .record-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .record-item:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .record-item.today {
+            background: rgba(33, 150, 243, 0.2);
+            border-left: 3px solid var(--info);
+        }
+        
+        .record-date {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .record-date-text {
+            font-weight: bold;
+        }
+        
+        .record-weekday {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        
+        .record-times {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .record-time {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .record-time .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .record-time .dot.on { background: var(--success); }
+        .record-time .dot.off { background: var(--info); }
+        .record-time .dot.none { background: var(--text-secondary); }
+        
+        .record-detail {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .record-item.expanded .record-detail {
+            display: block;
+        }
+        
+        .empty-records {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+        
+        /* 统计页 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value.success { color: var(--success); }
+        .stat-value.danger { color: var(--danger); }
+        .stat-value.warning { color: var(--warning); }
+        .stat-value.info { color: var(--info); }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .stats-summary {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        
+        .summary-title {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+        
+        /* 设置页 */
+        .settings-section {
+            background: var(--card-bg);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .settings-title {
+            padding: 15px 20px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .settings-item {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+        
+        .settings-item label {
+            color: var(--text-secondary);
+        }
+        
+        .settings-item input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1rem;
+            text-align: right;
+            outline: none;
+            width: 60%;
+        }
+        
+        .settings-item input::placeholder {
+            color: var(--text-secondary);
+        }
+        
+        .settings-btn {
+            width: 100%;
+            padding: 15px;
+            background: var(--info);
+            border: none;
+            color: white;
+            font-size: 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        .settings-btn.secondary {
+            background: var(--card-bg);
+            margin-top: 10px;
+        }
+        
+        .settings-btn.danger {
+            background: var(--danger);
+            margin-top: 10px;
+        }
+        
+        /* 底部导航 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom, 0));
+            border-top: 1px solid rgba(255,255,255,0.1);
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 20px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+        
+        .nav-item.active {
+            color: var(--info);
+        }
+        
+        .nav-item .icon {
+            font-size: 1.5rem;
+        }
+        
+        .nav-item .label {
+            font-size: 0.75rem;
+        }
+        
+        /* Toast 提示 */
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .toast.show {
+            opacity: 1;
+        }
+        
+        /* 模态框 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal-overlay.show {
+            display: flex;
+        }
+        
+        .modal {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 25px;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .modal-title {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .modal-input {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--bg-dark);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+        
+        .modal-input:focus {
+            outline: none;
+            border-color: var(--info);
+        }
+        
+        .modal-btns {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        
+        .modal-btn.cancel {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-secondary);
+        }
+        
+        .modal-btn.confirm {
+            background: var(--info);
+            color: white;
+        }
+        
+        /* 打卡中动画 */
+        .clocking {
+            position: relative;
+        }
+        
+        .clocking::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 30px;
+            height: 30px;
+            margin: -15px 0 0 -15px;
+            border: 3px solid transparent;
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 封面 -->
+    <div class="splash-screen" id="splash">
+        <div class="splash-content">
+            <div class="splash-title">天道酬勤</div>
+            <div class="splash-subtitle">打卡上班</div>
+        </div>
+        <div class="splash-hint">点击进入或等待3秒</div>
+    </div>
+
+    <!-- 主应用 -->
+    <div class="app-container" id="app">
+        <!-- 打卡页 -->
+        <div class="tab-content active" id="tab-clock">
+            <div class="clock-header">
+                <div class="clock-user" id="currentUser">员工</div>
+                <div class="clock-time" id="currentTime">00:00:00</div>
+                <div class="clock-date" id="currentDate">2024年1月1日 星期一</div>
+            </div>
+            
+            <div class="clock-buttons">
+                <button class="clock-btn on" id="btnOn" onclick="handleClock('on')">
+                    <span class="icon">🌅</span>
+                    <span class="label">上班打卡</span>
+                    <span class="time" id="timeOn">--:--:--</span>
+                </button>
+                <button class="clock-btn off" id="btnOff" onclick="handleClock('off')">
+                    <span class="icon">🌙</span>
+                    <span class="label">下班打卡</span>
+                    <span class="time" id="timeOff">--:--:--</span>
+                </button>
+            </div>
+            
+            <div class="today-status">
+                <div class="today-title">今日打卡状态</div>
+                <div class="status-row">
+                    <span class="status-label">上班状态</span>
+                    <span class="status-value" id="statusOn">--</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">下班状态</span>
+                    <span class="status-value" id="statusOff">--</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">上班位置</span>
+                    <span class="status-value" id="locationOn">--</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">下班位置</span>
+                    <span class="status-value" id="locationOff">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 记录页 -->
+        <div class="tab-content" id="tab-record">
+            <div class="record-header">
+                <div class="month-selector">
+                    <button onclick="changeMonth(-1)">‹</button>
+                    <span class="month-display" id="monthDisplay">2024年1月</span>
+                    <button onclick="changeMonth(1)">›</button>
+                </div>
+            </div>
+            <div class="record-list" id="recordList"></div>
+        </div>
+
+        <!-- 统计页 -->
+        <div class="tab-content" id="tab-stats">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value success" id="statDays">0</div>
+                    <div class="stat-label">出勤天数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value info" id="statTotal">0</div>
+                    <div class="stat-label">打卡次数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value danger" id="statLate">0</div>
+                    <div class="stat-label">迟到次数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value warning" id="statEarly">0</div>
+                    <div class="stat-label">早退次数</div>
+                </div>
+            </div>
+            <div class="stat-card" style="margin-bottom: 15px;">
+                <div class="stat-value" id="statAbsent" style="color: #9c27b0;">0</div>
+                <div class="stat-label">缺卡次数</div>
+            </div>
+            <div class="stats-summary">
+                <div class="summary-title">本月考勤汇总</div>
+                <div class="status-row">
+                    <span class="status-label">满勤天数</span>
+                    <span class="status-value" id="fullDays">0</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">出勤率</span>
+                    <span class="status-value" id="attendanceRate">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 设置页 -->
+        <div class="tab-content" id="tab-settings">
+            <div class="settings-section">
+                <div class="settings-title">个人信息</div>
+                <div class="settings-item">
+                    <label>姓名</label>
+                    <input type="text" id="settingName" placeholder="请输入姓名">
+                </div>
+                <div class="settings-item">
+                    <label>部门</label>
+                    <input type="text" id="settingDept" placeholder="请输入部门">
+                </div>
+                <div class="settings-item">
+                    <label>工号</label>
+                    <input type="text" id="settingCode" placeholder="请输入工号">
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <div class="settings-title">考勤时间</div>
+                <div class="settings-item">
+                    <label>上班时间</label>
+                    <input type="time" id="settingOnTime" value="08:00">
+                </div>
+                <div class="settings-item">
+                    <label>下班时间</label>
+                    <input type="time" id="settingOffTime" value="17:00">
+                </div>
+            </div>
+            
+            <button class="settings-btn" onclick="saveSettings()">保存设置</button>
+            <button class="settings-btn secondary" onclick="exportData()">📥 导出考勤记录</button>
+            <button class="settings-btn danger" onclick="clearData()">🗑️ 清空所有数据</button>
+        </div>
+    </div>
+
+    <!-- 底部导航 -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('clock')">
+            <span class="icon">📋</span>
+            <span class="label">打卡</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('record')">
+            <span class="icon">📅</span>
+            <span class="label">记录</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('stats')">
+            <span class="icon">📊</span>
+            <span class="label">统计</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('settings')">
+            <span class="icon">⚙️</span>
+            <span class="label">设置</span>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- 确认模态框 -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <div class="modal-title" id="modalTitle">确认操作</div>
+            <div class="modal-btns">
+                <button class="modal-btn cancel" onclick="closeModal()">取消</button>
+                <button class="modal-btn confirm" id="modalConfirm" onclick="confirmAction()">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let user = {};
+        let records = [];
+        let settings = {
+            onTime: '08:00',
+            offTime: '17:00'
+        };
+        let currentMonth = new Date();
+        let clockInterval;
+        let pendingAction = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            initClock();
+            
+            // 封面点击或自动进入
+            const splash = document.getElementById('splash');
+            splash.addEventListener('click', enterApp);
+            setTimeout(enterApp, 3000);
+            
+            // 更新打卡按钮状态
+            updateClockButtons();
+        });
+
+        // 进入主应用
+        function enterApp() {
+            const splash = document.getElementById('splash');
+            const app = document.getElementById('app');
+            
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.style.display = 'none';
+                app.classList.add('active');
+            }, 500);
+            
+            // 如果没有设置用户信息，打开设置页
+            if (!user.name) {
+                setTimeout(() => {
+                    switchTab('settings');
+                    showToast('请先设置个人信息');
+                }, 600);
+            }
+            
+            loadSettingsToForm();
+            updateTodayStatus();
+            updateStats();
+        }
+
+        // 时钟更新
+        function initClock() {
+            updateTime();
+            clockInterval = setInterval(updateTime, 1000);
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('zh-CN', { hour12: false });
+            const dateStr = now.toLocaleDateString('zh-CN', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                weekday: 'long'
+            });
+            
+            document.getElementById('currentTime').textContent = timeStr;
+            document.getElementById('currentDate').textContent = dateStr;
+        }
+
+        // Tab 切换
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            event.currentTarget.classList.add('active');
+            
+            if (tab === 'record') {
+                renderRecords();
+            } else if (tab === 'stats') {
+                updateStats();
+            }
+        }
+
+        // 打卡处理
+        async function handleClock(type) {
+            const btn = document.getElementById(type === 'on' ? 'btnOn' : 'btnOff');
+            if (btn.classList.contains('disabled')) return;
+            
+            btn.classList.add('clocking');
+            btn.disabled = true;
+            
+            try {
+                const location = await getLocation();
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('zh-CN', { hour12: false });
+                const dateStr = now.toISOString().split('T')[0];
+                
+                // 检查是否已打过卡
+                const existingIndex = records.findIndex(r => r.date === dateStr);
+                
+                if (existingIndex >= 0) {
+                    records[existingIndex][type === 'on' ? 'onTime' : 'offTime'] = timeStr;
+                    records[existingIndex][type === 'on' ? 'onLocation' : 'offLocation'] = location;
+                    records[existingIndex][type === 'on' ? 'onStatus' : 'offStatus'] = getStatus(type, timeStr);
+                } else {
+                    const record = {
+                        date: dateStr,
+                        onTime: type === 'on' ? timeStr : null,
+                        offTime: type === 'off' ? timeStr : null,
+                        onLocation: type === 'on' ? location : null,
+                        offLocation: type === 'off' ? location : null,
+                        onStatus: type === 'on' ? getStatus('on', timeStr) : null,
+                        offStatus: type === 'off' ? getStatus('off', timeStr) : null
+                    };
+                    records.push(record);
+                }
+                
+                saveData();
+                
+                // 震动反馈
+                if (navigator.vibrate) {
+                    navigator.vibrate(200);
+                }
+                
+                // 更新UI
+                document.getElementById(type === 'on' ? 'timeOn' : 'timeOff').textContent = `✓ ${timeStr}`;
+                btn.classList.add('completed');
+                updateTodayStatus();
+                
+                showToast(`${type === 'on' ? '上班' : '下班'}打卡成功`);
+                
+            } catch (err) {
+                showToast('定位失败，请检查权限');
+            } finally {
+                btn.classList.remove('clocking');
+                btn.disabled = false;
+                updateClockButtons();
+            }
+        }
+
+        // 获取状态
+        function getStatus(type, time) {
+            const settingsTime = type === 'on' ? settings.onTime : settings.offTime;
+            const timeMin = timeToMin(time);
+            const settingMin = timeToMin(settingsTime);
+            
+            if (type === 'on') {
+                return timeMin > settingMin ? 'late' : 'normal';
+            } else {
+                return timeMin < settingMin ? 'early' : 'normal';
+            }
+        }
+
+        // 时间转分钟
+        function timeToMin(time) {
+            if (!time) return 0;
+            const [h, m] = time.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        // GPS 定位
+        function getLocation() {
+            return new Promise((resolve) => {
+                if (!navigator.geolocation) {
+                    resolve({ lat: '0', lng: '0', address: '定位不可用' });
+                    return;
+                }
+                
+                navigator.geolocation.getCurrentPosition(
+                    pos => {
+                        const lat = pos.coords.latitude.toFixed(6);
+                        const lng = pos.coords.longitude.toFixed(6);
+                        resolve({ 
+                            lat, 
+                            lng, 
+                            address: `${lat}, ${lng}` 
+                        });
+                    },
+                    () => resolve({ lat: '0', lng: '0', address: '定位失败' }),
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            });
+        }
+
+        // 更新打卡按钮状态
+        function updateClockButtons() {
+            const today = new Date().toISOString().split('T')[0];
+            const todayRecord = records.find(r => r.date === today);
+            
+            if (todayRecord) {
+                if (todayRecord.onTime) {
+                    const btnOn = document.getElementById('btnOn');
+                    btnOn.classList.add('completed');
+                    document.getElementById('timeOn').textContent = `✓ ${todayRecord.onTime}`;
+                }
+                if (todayRecord.offTime) {
+                    const btnOff = document.getElementById('btnOff');
+                    btnOff.classList.add('completed');
+                    document.getElementById('timeOff').textContent = `✓ ${todayRecord.offTime}`;
+                }
+            }
+        }
+
+        // 更新今日状态
+        function updateTodayStatus() {
+            const today = new Date().toISOString().split('T')[0];
+            const todayRecord = records.find(r => r.date === today);
+            
+            if (todayRecord) {
+                // 上班状态
+                const statusOnEl = document.getElementById('statusOn');
+                if (todayRecord.onTime) {
+                    statusOnEl.textContent = todayRecord.onStatus === 'late' ? '迟到' : '正常';
+                    statusOnEl.className = `status-value ${todayRecord.onStatus === 'late' ? 'danger' : 'success'}`;
+                } else {
+                    statusOnEl.textContent = '--';
+                    statusOnEl.className = 'status-value';
+                }
+                
+                // 下班状态
+                const statusOffEl = document.getElementById('statusOff');
+                if (todayRecord.offTime) {
+                    statusOffEl.textContent = todayRecord.offStatus === 'early' ? '早退' : '正常';
+                    statusOffEl.className = `status-value ${todayRecord.offStatus === 'early' ? 'warning' : 'success'}`;
+                } else {
+                    statusOffEl.textContent = '--';
+                    statusOffEl.className = 'status-value';
+                }
+                
+                // 位置
+                document.getElementById('locationOn').textContent = todayRecord.onLocation?.address || '--';
+                document.getElementById('locationOff').textContent = todayRecord.offLocation?.address || '--';
+            } else {
+                document.getElementById('statusOn').textContent = '--';
+                document.getElementById('statusOff').textContent = '--';
+                document.getElementById('statusOn').className = 'status-value';
+                document.getElementById('statusOff').className = 'status-value';
+            }
+        }
+
+        // 渲染记录
+        function renderRecords() {
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+            const monthRecords = records.filter(r => {
+                const d = new Date(r.date);
+                return d.getFullYear() === year && d.getMonth() === month;
+            });
+            
+            document.getElementById('monthDisplay').textContent = 
+                `${year}年${month + 1}月`;
+            
+            const list = document.getElementById('recordList');
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (monthRecords.length === 0) {
+                list.innerHTML = '<div class="empty-records">暂无打卡记录</div>';
+                return;
+            }
+            
+            // 按日期排序
+            monthRecords.sort((a, b) => b.date.localeCompare(a.date));
+            
+            list.innerHTML = monthRecords.map(record => {
+                const date = new Date(record.date);
+                const weekday = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][date.getDay()];
+                const isToday = record.date === today;
+                
+                const onStatusClass = record.onStatus === 'late' ? 'danger' : 'success';
+                const offStatusClass = record.offStatus === 'early' ? 'warning' : 'info';
+                
+                return `
+                    <div class="record-item ${isToday ? 'today' : ''}" onclick="toggleRecord(this)">
+                        <div class="record-date">
+                            <span class="record-date-text">${record.date}</span>
+                            <span class="record-weekday">${weekday}</span>
+                        </div>
+                        <div class="record-times">
+                            <div class="record-time">
+                                <span class="dot ${record.onTime ? 'on' : 'none'}"></span>
+                                <span>上班: ${record.onTime || '--'}</span>
+                                ${record.onTime ? `<span style="color: var(--${onStatusClass})">${record.onStatus === 'late' ? '(迟到)' : ''}</span>` : ''}
+                            </div>
+                            <div class="record-time">
+                                <span class="dot ${record.offTime ? 'off' : 'none'}"></span>
+                                <span>下班: ${record.offTime || '--'}</span>
+                                ${record.offTime ? `<span style="color: var(--${offStatusClass})">${record.offStatus === 'early' ? '(早退)' : ''}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="record-detail">
+                            <p>上班位置: ${record.onLocation?.address || '无'}</p>
+                            <p>下班位置: ${record.offLocation?.address || '无'}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 展开/收起记录详情
+        function toggleRecord(el) {
+            el.classList.toggle('expanded');
+        }
+
+        // 月份切换
+        function changeMonth(delta) {
+            currentMonth.setMonth(currentMonth.getMonth() + delta);
+            renderRecords();
+        }
+
+        // 更新统计
+        function updateStats() {
+            const year = new Date().getFullYear();
+            const month = new Date().getMonth();
+            
+            const monthRecords = records.filter(r => {
+                const d = new Date(r.date);
+                return d.getFullYear() === year && d.getMonth() === month;
+            });
+            
+            // 出勤天数（有上班或下班打卡）
+            const attendanceDays = monthRecords.filter(r => r.onTime || r.offTime).length;
+            
+            // 打卡次数
+            const totalClocks = monthRecords.reduce((sum, r) => {
+                return sum + (r.onTime ? 1 : 0) + (r.offTime ? 1 : 0);
+            }, 0);
+            
+            // 迟到次数
+            const lateDays = monthRecords.filter(r => r.onStatus === 'late').length;
+            
+            // 早退次数
+            const earlyDays = monthRecords.filter(r => r.offStatus === 'early').length;
+            
+            // 缺卡次数（只有上班或只有下班）
+            const absentDays = monthRecords.filter(r => 
+                (r.onTime && !r.offTime) || (!r.onTime && r.offTime)
+            ).length;
+            
+            // 满勤天数（有上下班打卡且都正常）
+            const fullDays = monthRecords.filter(r => 
+                r.onTime && r.offTime && 
+                r.onStatus !== 'late' && r.offStatus !== 'early'
+            ).length;
+            
+            // 计算当月工作日天数（简化：按30天算，约22个工作日）
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const workDays = Math.ceil(daysInMonth * 0.7);
+            
+            const attendanceRate = workDays > 0 ? Math.round((attendanceDays / workDays) * 100) : 0;
+            
+            document.getElementById('statDays').textContent = attendanceDays;
+            document.getElementById('statTotal').textContent = totalClocks;
+            document.getElementById('statLate').textContent = lateDays;
+            document.getElementById('statEarly').textContent = earlyDays;
+            document.getElementById('statAbsent').textContent = absentDays;
+            document.getElementById('fullDays').textContent = fullDays;
+            document.getElementById('attendanceRate').textContent = `${attendanceRate}%`;
+        }
+
+        // 设置相关
+        function loadSettingsToForm() {
+            document.getElementById('settingName').value = user.name || '';
+            document.getElementById('settingDept').value = user.dept || '';
+            document.getElementById('settingCode').value = user.code || '';
+            document.getElementById('settingOnTime').value = settings.onTime;
+            document.getElementById('settingOffTime').value = settings.offTime;
+            document.getElementById('currentUser').textContent = user.name || '员工';
+        }
+
+        function saveSettings() {
+            user.name = document.getElementById('settingName').value.trim();
+            user.dept = document.getElementById('settingDept').value.trim();
+            user.code = document.getElementById('settingCode').value.trim();
+            settings.onTime = document.getElementById('settingOnTime').value;
+            settings.offTime = document.getElementById('settingOffTime').value;
+            
+            saveData();
+            document.getElementById('currentUser').textContent = user.name || '员工';
+            updateTodayStatus();
+            showToast('设置已保存');
+        }
+
+        // 导出数据
+        function exportData() {
+            if (records.length === 0) {
+                showToast('暂无数据可导出');
+                return;
+            }
+            
+            const headers = ['日期', '姓名', '部门', '工号', '上班时间', '上班位置', '下班时间', '下班位置', '上班状态', '下班状态'];
+            const rows = records.map(r => [
+                r.date,
+                user.name || '',
+                user.dept || '',
+                user.code || '',
+                r.onTime || '',
+                r.onLocation?.address || '',
+                r.offTime || '',
+                r.offLocation?.address || '',
+                r.onStatus || '',
+                r.offStatus || ''
+            ]);
+            
+            const csvContent = [headers, ...rows]
+                .map(row => row.map(cell => `"${cell}"`).join(','))
+                .join('\n');
+            
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `考勤记录_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            
+            URL.revokeObjectURL(url);
+            showToast('导出成功');
+        }
+
+        // 清空数据
+        function clearData() {
+            document.getElementById('modalTitle').textContent = '确定要清空所有数据吗？';
+            document.getElementById('confirmModal').classList.add('show');
+            pendingAction = 'clear';
+        }
+
+        function confirmAction() {
+            if (pendingAction === 'clear') {
+                records = [];
+                user = {};
+                settings = { onTime: '08:00', offTime: '17:00' };
+                localStorage.removeItem('attendance_user');
+                localStorage.removeItem('attendance_records');
+                localStorage.removeItem('attendance_settings');
+                loadSettingsToForm();
+                updateClockButtons();
+                updateTodayStatus();
+                showToast('数据已清空');
+            }
+            closeModal();
+        }
+
+        function closeModal() {
+            document.getElementById('confirmModal').classList.remove('show');
+            pendingAction = null;
+        }
+
+        // Toast 提示
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        // 数据持久化
+        function saveData() {
+            localStorage.setItem('attendance_user', JSON.stringify(user));
+            localStorage.setItem('attendance_records', JSON.stringify(records));
+            localStorage.setItem('attendance_settings', JSON.stringify(settings));
+        }
+
+        function loadData() {
+            try {
+                const savedUser = localStorage.getItem('attendance_user');
+                const savedRecords = localStorage.getItem('attendance_records');
+                const savedSettings = localStorage.getItem('attendance_settings');
+                
+                if (savedUser) user = JSON.parse(savedUser);
+                if (savedRecords) records = JSON.parse(savedRecords);
+                if (savedSettings) settings = JSON.parse(savedSettings);
+            } catch (e) {
+                console.error('数据加载失败', e);
+            }
+        }
+    </script>
+</body>
+</html>
