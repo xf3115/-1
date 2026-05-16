@@ -2,718 +2,604 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#1a1a2e">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>乐东英歌海扭王块吊装软件</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
         }
-        
-        html, body {
-            height: 100%;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            color: #fff;
-        }
-        
         body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #1a1a2e;
+            color: #fff;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            padding: 15px;
+            padding: 20px;
+            padding-bottom: 60px;
         }
-        
-        .container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            max-width: 500px;
-            margin: 0 auto;
-            width: 100%;
-        }
-        
-        /* 标题 */
-        .title {
+        h1 {
             text-align: center;
-            font-size: 18px;
+            font-size: 22px;
             color: #FFD700;
-            letter-spacing: 2px;
-            padding: 12px 0;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255,215,0,0.5);
         }
-        
         /* 模式选择按钮 */
-        .mode-switch {
+        .mode-buttons {
             display: flex;
-            gap: 10px;
             justify-content: center;
-            margin-bottom: 5px;
+            gap: 15px;
+            margin-bottom: 20px;
         }
-        
         .mode-btn {
-            flex: 1;
-            padding: 14px 20px;
-            font-size: 15px;
-            color: #888;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 24px;
+            border: 2px solid #555;
             border-radius: 8px;
+            background: #2a2a4a;
+            color: #aaa;
+            font-size: 16px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
+        }
+        .mode-btn.active {
+            background: #3a3a5a;
+            border-color: #FFD700;
+            color: #FFD700;
+            box-shadow: 0 0 15px rgba(255,215,0,0.3);
+        }
+        /* 通用卡片 */
+        .card {
+            background: #252540;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 15px;
+        }
+        .card-label {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+        /* ① 吊钩垂直距离 */
+        .input-row {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 6px;
+            gap: 10px;
         }
-        
-        .mode-btn.active {
+        .input-row input {
+            flex: 1;
+            padding: 14px;
+            font-size: 18px;
+            border: 2px solid #444;
+            border-radius: 8px;
+            background: #1a1a2e;
             color: #FFD700;
-            background: rgba(50, 50, 70, 0.9);
-            border-color: #FFD700;
-            border-width: 2px;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            text-align: center;
         }
-        
-        /* 吊钩垂直距离 */
-        .height-section {
+        .input-row input:focus {
+            outline: none;
+            border-color: #FFD700;
+        }
+        .input-row span {
+            font-size: 16px;
+            color: #888;
+        }
+        /* 手动模式滑块 */
+        #manual-content {
+            display: block;
+        }
+        #compass-content {
+            display: none;
+        }
+        .slider-container {
+            margin-top: 10px;
+        }
+        .slider-container input[type="range"] {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #444;
+            border-radius: 4px;
+            outline: none;
+        }
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 28px;
+            height: 28px;
+            background: #FFD700;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255,215,0,0.5);
+        }
+        .slider-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 15px 18px;
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 10px;
+            margin-top: 10px;
         }
-        
-        .height-label {
-            font-size: 14px;
-            color: #ccc;
-        }
-        
-        .height-label span.num {
-            color: #FFD700;
-            font-weight: bold;
-        }
-        
-        .height-right {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .height-input {
-            width: 80px;
-            font-size: 28px;
-            font-weight: bold;
-            color: #FFD700;
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            border-radius: 6px;
-            padding: 5px 10px;
-            text-align: center;
-            outline: none;
-            font-family: inherit;
-        }
-        
-        .height-input:focus {
-            border-color: #FFD700;
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-        }
-        
-        .unit {
+        .manual-input {
+            width: 100px;
+            padding: 10px;
             font-size: 16px;
-            color: #FFD700;
-        }
-        
-        /* 手动模式 - 滑块区域 */
-        .manual-mode {
-            padding: 20px 15px;
-            background: rgba(0, 0, 0, 0.35);
-            border-radius: 12px;
-        }
-        
-        .slider-wrapper {
-            margin-bottom: 15px;
-        }
-        
-        .slider {
-            width: 100%;
-            height: 10px;
-            -webkit-appearance: none;
-            background: rgba(255, 140, 0, 0.2);
-            border-radius: 5px;
-            outline: none;
-        }
-        
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 28px;
-            height: 28px;
-            background: #FF8C00;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 0 15px rgba(255, 140, 0, 0.6);
-        }
-        
-        .slider::-moz-range-thumb {
-            width: 28px;
-            height: 28px;
-            background: #FF8C00;
-            border-radius: 50%;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 0 15px rgba(255, 140, 0, 0.6);
-        }
-        
-        .angle-display {
-            font-size: 80px;
-            font-weight: bold;
-            color: #FF8C00;
-            text-shadow: 0 0 20px rgba(255, 140, 0, 0.6);
-            line-height: 1;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-        
-        .angle-input {
-            width: 100%;
-            font-size: 32px;
-            color: #FF8C00;
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid rgba(255, 140, 0, 0.4);
+            border: 2px solid #444;
             border-radius: 8px;
-            padding: 10px 15px;
-            text-align: center;
-            outline: none;
-        }
-        
-        .angle-input:focus {
-            border-color: #FF8C00;
-            box-shadow: 0 0 10px rgba(255, 140, 0, 0.3);
-        }
-        
-        /* 罗盘模式 */
-        .compass-mode {
-            padding: 20px 15px;
-            background: rgba(0, 0, 0, 0.35);
-            border-radius: 12px;
+            background: #1a1a2e;
+            color: #FF8C00;
             text-align: center;
         }
-        
+        /* 罗盘 */
+        #compass-content {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
         .compass-container {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 15px;
-        }
-        
-        .compass {
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            background: radial-gradient(circle at center, #1a1a2e 0%, #0a0a15 100%);
-            border: 3px solid #FFD700;
-            box-shadow: 
-                0 0 20px rgba(255, 215, 0, 0.4),
-                inset 0 0 40px rgba(0, 0, 0, 0.8);
             position: relative;
+            width: 180px;
+            height: 180px;
         }
-        
-        /* 罗盘外圈刻度 */
-        .compass-ring {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+        .compass {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #2a2a4a, #1a1a2e);
+            border: 4px solid #FFD700;
+            position: relative;
+            box-shadow: 0 0 20px rgba(255,215,0,0.3);
         }
-        
         .compass-tick {
             position: absolute;
             width: 2px;
             height: 8px;
-            background: rgba(255, 215, 0, 0.7);
-            top: 4px;
+            background: #666;
             left: 50%;
-            transform-origin: center 98px;
+            top: 8px;
+            transform-origin: 50% 82px;
         }
-        
         .compass-tick.major {
             height: 12px;
             width: 3px;
-            background: #FFD700;
+            background: #888;
         }
-        
-        /* 方向字母 */
         .compass-direction {
             position: absolute;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             color: #FFD700;
-            text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
         }
-        
-        .compass-n { top: 18px; left: 50%; transform: translateX(-50%); }
-        .compass-e { right: 18px; top: 50%; transform: translateY(-50%); }
-        .compass-s { bottom: 18px; left: 50%; transform: translateX(-50%); }
-        .compass-w { left: 18px; top: 50%; transform: translateY(-50%); }
-        
-        /* 红色指针 */
-        .compass-needle {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 6px;
-            height: 75px;
-            transform-origin: center bottom;
-            transform: translate(-50%, -100%);
-            transition: transform 0.1s ease-out;
-        }
-        
-        .needle-pointer {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-bottom: 40px solid #FF4444;
-            filter: drop-shadow(0 0 8px #FF4444);
-        }
-        
-        .needle-tail {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-top: 35px solid rgba(120, 120, 140, 0.9);
-        }
-        
-        /* 中心圆点 */
+        .compass-direction.n { top: 15px; left: 50%; transform: translateX(-50%); }
+        .compass-direction.s { bottom: 15px; left: 50%; transform: translateX(-50%); }
+        .compass-direction.e { right: 15px; top: 50%; transform: translateY(-50%); }
+        .compass-direction.w { left: 15px; top: 50%; transform: translateY(-50%); }
         .compass-center {
             position: absolute;
-            top: 50%;
-            left: 50%;
             width: 16px;
             height: 16px;
-            background: linear-gradient(135deg, #FFD700, #B8860B);
+            background: #FFD700;
             border-radius: 50%;
+            left: 50%;
+            top: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
-            z-index: 10;
+            box-shadow: 0 0 10px rgba(255,215,0,0.5);
         }
-        
-        .compass-angle {
-            font-size: 28px;
-            font-weight: bold;
-            color: #FF8C00;
-            text-shadow: 0 0 10px rgba(255, 140, 0, 0.5);
-            margin-bottom: 12px;
+        .compass-pointer {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 35px solid #ff4444;
+            left: 50%;
+            top: 50%;
+            transform-origin: 50% 100%;
+            transform: translate(-50%, -100%);
         }
-        
         .reset-btn {
             padding: 10px 30px;
-            font-size: 14px;
-            color: #888;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .reset-btn:active {
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-        }
-        
-        /* 隐藏模式 */
-        .mode-content {
-            display: none;
-        }
-        
-        .mode-content.active {
-            display: block;
-        }
-        
-        /* 计算结果区域 */
-        .result-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 18px;
-            background: rgba(0, 0, 0, 0.35);
-            border-radius: 10px;
-        }
-        
-        .result-label {
-            font-size: 14px;
-            color: #ccc;
-        }
-        
-        .result-label span.num {
-            color: #FFD700;
-            font-weight: bold;
-        }
-        
-        .result-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #FFD700;
-            text-shadow: 
-                0 0 8px #FFD700,
-                0 0 15px #FFD700;
-        }
-        
-        .result-unit {
-            font-size: 14px;
-            color: #FFD700;
-            margin-left: 5px;
-        }
-        
-        /* 安全判定 */
-        .safety-section {
-            text-align: center;
-            padding: 18px;
-            background: rgba(0, 0, 0, 0.35);
-            border-radius: 12px;
-        }
-        
-        .safety-status {
-            font-size: 26px;
-            font-weight: bold;
-            padding: 12px 25px;
+            font-size: 16px;
+            background: #444;
+            border: 2px solid #666;
             border-radius: 8px;
-            display: inline-block;
+            color: #fff;
+            cursor: pointer;
         }
-        
-        .safety-status.safe {
+        .reset-btn:active {
+            background: #555;
+        }
+        .compass-hint {
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            line-height: 1.6;
+        }
+        /* 角度显示 */
+        .angle-display {
+            text-align: center;
+            margin: 10px 0;
+        }
+        .angle-value {
+            font-size: 48px;
+            font-weight: bold;
+            color: #FF8C00;
+            text-shadow: 0 0 20px rgba(255,140,0,0.5);
+        }
+        .angle-value.manual {
+            color: #FF8C00;
+        }
+        /* 结果卡片 */
+        .result-card {
+            text-align: center;
+            padding: 20px;
+        }
+        .result-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 0 0 20px rgba(255,215,0,0.5);
+        }
+        .result-unit {
+            font-size: 18px;
+            color: #aaa;
+        }
+        .result-label {
+            font-size: 13px;
+            color: #888;
+            margin-top: 5px;
+        }
+        /* 安全判定 */
+        .safety-card {
+            text-align: center;
+            padding: 20px;
+        }
+        .safety-ok {
+            font-size: 32px;
             color: #00FF88;
-            text-shadow: 
-                0 0 10px #00FF88,
-                0 0 20px #00FF88,
-                0 0 40px #00FF88;
+            text-shadow: 0 0 20px rgba(0,255,136,0.5);
         }
-        
-        .safety-status.danger {
+        .safety-fail {
+            font-size: 28px;
             color: #FF4444;
-            text-shadow: 
-                0 0 10px #FF4444,
-                0 0 20px #FF4444,
-                0 0 40px #FF4444;
+            text-shadow: 0 0 20px rgba(255,68,68,0.5);
+            animation: blink 0.8s infinite;
         }
-        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
         .safety-hint {
-            margin-top: 8px;
+            font-size: 13px;
+            color: #888;
+            margin-top: 5px;
+        }
+        /* 最大安全偏角 */
+        .max-angle-card {
+            text-align: center;
+        }
+        .max-angle-value {
+            font-size: 24px;
+            color: #FFD700;
+        }
+        .max-angle-hint {
             font-size: 12px;
             color: #666;
-        }
-        
-        /* 最大安全偏角 */
-        .max-angle-section {
-            text-align: center;
-            padding: 12px;
-            background: rgba(0, 0, 0, 0.25);
-            border-radius: 10px;
-        }
-        
-        .max-angle-title {
-            font-size: 14px;
-            color: #ccc;
-            margin-bottom: 5px;
-        }
-        
-        .max-angle-value {
-            font-size: 18px;
-            font-weight: bold;
-            color: #FFD700;
-        }
-        
-        .max-angle-hint {
-            margin-top: 6px;
-            font-size: 11px;
-            color: #555;
+            margin-top: 5px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- 标题 -->
-        <div class="title">乐东英歌海扭王块吊装软件</div>
-        
-        <!-- 模式切换 -->
-        <div class="mode-switch">
-            <button class="mode-btn active" id="manualModeBtn" onclick="switchMode('manual')">✏️ 手动模式</button>
-            <button class="mode-btn" id="compassModeBtn" onclick="switchMode('compass')">🧭 罗盘模式</button>
-        </div>
-        
-        <!-- ① 吊钩垂直距离 -->
-        <div class="height-section">
-            <div class="height-label"><span class="num">①</span> 吊钩垂直距离</div>
-            <div class="height-right">
-                <input type="number" class="height-input" id="heightInput" value="20" min="0.1" step="0.1">
-                <span class="unit">米</span>
-            </div>
-        </div>
-        
-        <!-- 手动模式内容 -->
-        <div class="mode-content active" id="manualContent">
-            <div class="manual-mode">
-                <div class="slider-wrapper">
-                    <input type="range" class="slider" id="angleSlider" min="0" max="45" step="0.1" value="0">
-                </div>
-                <div class="angle-display" id="angleDisplay">0.0°</div>
-                <input type="number" class="angle-input" id="angleInput" step="0.1" value="0">
-            </div>
-        </div>
-        
-        <!-- 罗盘模式内容 -->
-        <div class="mode-content" id="compassContent">
-            <div class="compass-mode">
-                <div class="compass-angle" id="compassAngle">0.0°</div>
-                <div class="compass-container">
-                    <div class="compass" id="compass">
-                        <div class="compass-ring" id="compassRing"></div>
-                        <span class="compass-direction compass-n">N</span>
-                        <span class="compass-direction compass-e">E</span>
-                        <span class="compass-direction compass-s">S</span>
-                        <span class="compass-direction compass-w">W</span>
-                        <div class="compass-needle" id="compassNeedle">
-                            <div class="needle-pointer"></div>
-                            <div class="needle-tail"></div>
-                        </div>
-                        <div class="compass-center"></div>
-                    </div>
-                </div>
-                <button class="reset-btn" id="resetBtn">归零</button>
-            </div>
-        </div>
-        
-        <!-- ② 伸长偏差 -->
-        <div class="result-row">
-            <div class="result-label"><span class="num">②</span> 伸长偏差</div>
-            <div>
-                <span class="result-value" id="deviationValue">0.000</span>
-                <span class="result-unit">米</span>
-            </div>
-        </div>
-        
-        <!-- ③ 实际绳长 -->
-        <div class="result-row">
-            <div class="result-label"><span class="num">③</span> 实际绳长</div>
-            <div>
-                <span class="result-value" id="ropeLengthValue">0.000</span>
-                <span class="result-unit">米</span>
-            </div>
-        </div>
-        
-        <!-- ④ 安全判定 -->
-        <div class="safety-section">
-            <div class="safety-status safe" id="safetyStatus">✓ 安全</div>
-            <div class="safety-hint">偏差≤0.3米</div>
-        </div>
-        
-        <!-- ⑤ 最大安全偏角 -->
-        <div class="max-angle-section">
-            <div class="max-angle-title">⑤ 最大安全偏角 <span id="maxAngleValue" class="max-angle-value">4.47°</span></div>
-            <div class="max-angle-hint">偏差刚好0.3米时的极限角度</div>
+    <h1>乐东英歌海扭王块吊装软件</h1>
+
+    <!-- 模式选择 -->
+    <div class="mode-buttons">
+        <button class="mode-btn active" id="manualBtn" onclick="switchMode('manual')">✏️ 手动模式</button>
+        <button class="mode-btn" id="compassBtn" onclick="switchMode('compass')">🧭 罗盘模式</button>
+    </div>
+
+    <!-- ① 吊钩垂直距离 -->
+    <div class="card">
+        <div class="card-label">① 吊钩垂直距离</div>
+        <div class="input-row">
+            <input type="number" id="distanceInput" value="20" min="0.1" max="1000" step="0.1">
+            <span>米</span>
         </div>
     </div>
 
+    <!-- ②伸长偏差 / ③实际绳长 -->
+    <div class="card result-card">
+        <div class="card-label">② 伸长偏差</div>
+        <div class="result-value" id="deviationValue">0.000</div>
+        <div class="result-unit">米</div>
+    </div>
+
+    <div class="card result-card">
+        <div class="card-label">③ 实际绳长</div>
+        <div class="result-value" id="ropeLengthValue">0.000</div>
+        <div class="result-unit">米</div>
+    </div>
+
+    <!-- 手动模式内容 -->
+    <div id="manual-content" class="card">
+        <div class="card-label">偏角（手动模式）</div>
+        <div class="angle-display">
+            <span class="angle-value manual" id="manualAngleDisplay">0.0°</span>
+        </div>
+        <div class="slider-container">
+            <input type="range" id="angleSlider" min="0" max="45" value="0" step="0.1">
+            <div class="slider-row">
+                <span>0°</span>
+                <span>45°</span>
+            </div>
+        </div>
+        <div class="input-row" style="margin-top: 15px; justify-content: center;">
+            <input type="number" class="manual-input" id="manualAngleInput" value="0" min="0" max="45" step="0.1">
+            <span style="color:#FF8C00;">°</span>
+        </div>
+    </div>
+
+    <!-- 罗盘模式内容 -->
+    <div id="compass-content" class="card">
+        <div class="card-label">偏角（罗盘模式）</div>
+        <div class="angle-display">
+            <span class="angle-value" id="compassAngleDisplay">0.0°</span>
+        </div>
+        <div class="compass-container">
+            <div class="compass">
+                <!-- 刻度线 -->
+                <div class="compass-tick major" style="transform: rotate(0deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(10deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(20deg) translateX(-50%);"></div>
+                <div class="compass-tick major" style="transform: rotate(30deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(40deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(50deg) translateX(-50%);"></div>
+                <div class="compass-tick major" style="transform: rotate(60deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(70deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(80deg) translateX(-50%);"></div>
+                <div class="compass-tick major" style="transform: rotate(90deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(100deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(110deg) translateX(-50%);"></div>
+                <div class="compass-tick major" style="transform: rotate(120deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(130deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(140deg) translateX(-50%);"></div>
+                <div class="compass-tick major" style="transform: rotate(150deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(160deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(170deg) translateX(-50%);"></div>
+                <div class="compass-tick major" style="transform: rotate(180deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(190deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(200deg) translateX(-50%);"></div>
+                <div class="compass-tick major" style="transform: rotate(210deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(220deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(230deg) translateX(-50%);"></div>
+                <div class="compass-tick major" style="transform: rotate(240deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(250deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(260deg) translateX(-50%);"></div>
+                <div class="compass-tick major" style="transform: rotate(270deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(280deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(290deg) translateX(-50%);"></div>
+                <div class="compass-tick major" style="transform: rotate(300deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(310deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(320deg) translateX(-50%);"></div>
+                <div class="compass-tick major" style="transform: rotate(330deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(340deg) translateX(-50%);"></div>
+                <div class="compass-tick" style="transform: rotate(350deg) translateX(-50%);"></div>
+                <div class="compass-tick major" style="transform: rotate(360deg) translateX(-50%);"></div>
+                <!-- 方向 -->
+                <span class="compass-direction n">N</span>
+                <span class="compass-direction e">E</span>
+                <span class="compass-direction s">S</span>
+                <span class="compass-direction w">W</span>
+                <!-- 指针 -->
+                <div class="compass-pointer" id="compassPointer"></div>
+                <!-- 中心 -->
+                <div class="compass-center"></div>
+            </div>
+        </div>
+        <button class="reset-btn" id="resetBtn">🔄 归零</button>
+        <div class="compass-hint">
+            使用提示：<br>
+            ① 手机屏幕朝自己<br>
+            ② 对准垂直线点归零<br>
+            ③ 转对准吊绳读数
+        </div>
+    </div>
+
+    <!-- ④ 安全判定 -->
+    <div class="card safety-card">
+        <div class="card-label">④ 安全判定</div>
+        <div id="safetyResult" class="safety-ok">✓ 安全</div>
+        <div class="safety-hint">偏差 ≤ 0.3米</div>
+    </div>
+
+    <!-- ⑤ 最大安全偏角 -->
+    <div class="card max-angle-card">
+        <div class="card-label">⑤ 最大安全偏角</div>
+        <div class="max-angle-value" id="maxAngleValue">--</div>
+        <div class="max-angle-hint">偏差刚好0.3米时的极限角度</div>
+    </div>
+
     <script>
-        // 状态变量
+        // ===== 状态变量 =====
         let currentMode = 'manual';
-        let currentAngle = 0;
         let baseAlpha = null;
         let alphaHistory = [];
-        const HISTORY_SIZE = 3;
-        const SAFE_THRESHOLD = 0.3;
-        
-        // DOM元素
-        const heightInput = document.getElementById('heightInput');
+        let currentAngle = 0;
+        let gyroStarted = false;
+        let lastRawAlpha = null;
+
+        // ===== DOM元素 =====
+        const manualBtn = document.getElementById('manualBtn');
+        const compassBtn = document.getElementById('compassBtn');
+        const manualContent = document.getElementById('manual-content');
+        const compassContent = document.getElementById('compass-content');
+        const distanceInput = document.getElementById('distanceInput');
         const angleSlider = document.getElementById('angleSlider');
-        const angleDisplay = document.getElementById('angleDisplay');
-        const angleInput = document.getElementById('angleInput');
+        const manualAngleInput = document.getElementById('manualAngleInput');
+        const manualAngleDisplay = document.getElementById('manualAngleDisplay');
+        const compassAngleDisplay = document.getElementById('compassAngleDisplay');
+        const compassPointer = document.getElementById('compassPointer');
+        const resetBtn = document.getElementById('resetBtn');
         const deviationValue = document.getElementById('deviationValue');
         const ropeLengthValue = document.getElementById('ropeLengthValue');
-        const safetyStatus = document.getElementById('safetyStatus');
+        const safetyResult = document.getElementById('safetyResult');
         const maxAngleValue = document.getElementById('maxAngleValue');
-        const compassNeedle = document.getElementById('compassNeedle');
-        const compassAngle = document.getElementById('compassAngle');
-        const compassRing = document.getElementById('compassRing');
-        const resetBtn = document.getElementById('resetBtn');
-        
-        // 模式切换
+
+        // ===== 模式切换 =====
         function switchMode(mode) {
             currentMode = mode;
-            document.getElementById('manualModeBtn').classList.toggle('active', mode === 'manual');
-            document.getElementById('compassModeBtn').classList.toggle('active', mode === 'compass');
-            document.getElementById('manualContent').classList.toggle('active', mode === 'manual');
-            document.getElementById('compassContent').classList.toggle('active', mode === 'compass');
+            manualBtn.classList.toggle('active', mode === 'manual');
+            compassBtn.classList.toggle('active', mode === 'compass');
+            manualContent.style.display = mode === 'manual' ? 'block' : 'none';
+            compassContent.style.display = mode === 'compass' ? 'block' : 'none';
             if (mode === 'compass') {
                 startGyro();
             }
+            updateDisplay();
         }
-        
-        // 生成罗盘刻度
-        function generateTicks() {
-            for (let i = 0; i < 36; i++) {
-                const tick = document.createElement('div');
-                tick.className = 'compass-tick' + (i % 3 === 0 ? ' major' : '');
-                tick.style.transform = `rotate(${i * 10}deg) translateX(-50%)`;
-                compassRing.appendChild(tick);
+
+        // ===== 陀螺仪启动 =====
+        async function startGyro() {
+            if (gyroStarted) return;
+            if ('DeviceOrientationEvent' in window) {
+                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    try {
+                        const perm = await DeviceOrientationEvent.requestPermission();
+                        if (perm === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation);
+                            gyroStarted = true;
+                        }
+                    } catch(e) {
+                        console.log('陀螺仪权限被拒绝', e);
+                    }
+                } else {
+                    window.addEventListener('deviceorientation', handleOrientation);
+                    gyroStarted = true;
+                }
             }
         }
-        
-        // 计算最大安全偏角: arccos(D/(D+0.3)) * 180/PI
-        function calculateMaxSafeAngle() {
-            const D = parseFloat(heightInput.value) || 20;
-            if (D <= 0) return 0;
-            const ratio = D / (D + SAFE_THRESHOLD);
-            if (ratio < 0 || ratio > 1) return 0;
-            return Math.acos(ratio) * 180 / Math.PI;
-        }
-        
-        // 更新显示
-        function updateDisplay() {
-            const D = parseFloat(heightInput.value) || 20;
-            
-            // 计算伸长偏差 = D/cos(θ) - D
-            // 计算实际绳长 = D/cos(θ)
-            let deviation = 0;
-            let ropeLength = D;
-            
-            if (currentAngle > 0 && currentAngle < 90) {
-                const rad = currentAngle * Math.PI / 180;
-                ropeLength = D / Math.cos(rad);
-                deviation = ropeLength - D;
-            }
-            
-            // 更新伸长偏差
-            deviationValue.textContent = deviation.toFixed(3);
-            
-            // 更新实际绳长
-            ropeLengthValue.textContent = ropeLength.toFixed(3);
-            
-            // 安全判定 ≤0.3米安全，>0.3米超标禁止施工
-            if (deviation > SAFE_THRESHOLD) {
-                safetyStatus.textContent = "❌ 超标禁止施工";
-                safetyStatus.className = "safety-status danger";
-            } else {
-                safetyStatus.textContent = "✓ 安全";
-                safetyStatus.className = "safety-status safe";
-            }
-            
-            // 最大安全偏角
-            maxAngleValue.textContent = calculateMaxSafeAngle().toFixed(2) + "°";
-            
-            // 更新罗盘指针
-            compassNeedle.style.transform = `translate(-50%, -100%) rotate(${currentAngle}deg)`;
-            
-            // 更新手动模式显示
-            angleDisplay.textContent = currentAngle.toFixed(1) + "°";
-            angleSlider.value = currentAngle;
-            angleInput.value = currentAngle.toFixed(1);
-            
-            // 更新罗盘模式角度显示
-            compassAngle.textContent = currentAngle.toFixed(1) + "°";
-        }
-        
-        // 陀螺仪处理
+
+        // ===== 陀螺仪处理 =====
         function handleOrientation(event) {
             let alpha = event.alpha;
             if (alpha === null || alpha === undefined) return;
+            
+            lastRawAlpha = alpha;
             
             if (baseAlpha === null) {
                 baseAlpha = alpha;
             }
             
-            let delta = alpha - baseAlpha;
-            if (delta > 180) delta -= 360;
-            if (delta < -180) delta += 360;
+            let diff = alpha - baseAlpha;
+            if (diff > 180) diff -= 360;
+            if (diff < -180) diff += 360;
             
-            alphaHistory.push(delta);
-            if (alphaHistory.length > HISTORY_SIZE) alphaHistory.shift();
+            let angle = Math.abs(diff);
+            if (angle > 90) angle = 180 - angle;
             
-            const smoothed = alphaHistory.reduce((a, b) => a + b, 0) / alphaHistory.length;
-            currentAngle = Math.min(45, Math.max(0, Math.abs(smoothed)));
+            alphaHistory.push(angle);
+            if (alphaHistory.length > 3) alphaHistory.shift();
+            
+            let sum = 0;
+            for (let i = 0; i < alphaHistory.length; i++) {
+                sum += alphaHistory[i];
+            }
+            currentAngle = sum / alphaHistory.length;
+            
             updateDisplay();
         }
-        
-        // 归零
-        function resetAngle() {
-            baseAlpha = null;
+
+        // ===== 归零按钮 =====
+        resetBtn.addEventListener('click', function() {
+            if (lastRawAlpha !== null) {
+                baseAlpha = lastRawAlpha;
+            }
             alphaHistory = [];
             currentAngle = 0;
             updateDisplay();
-        }
-        
-        // 事件监听
-        heightInput.addEventListener('input', updateDisplay);
-        
-        angleSlider.addEventListener('input', (e) => {
-            currentAngle = parseFloat(e.target.value);
-            updateDisplay();
         });
-        
-        angleInput.addEventListener('input', (e) => {
-            const val = parseFloat(e.target.value);
-            if (!isNaN(val)) {
-                currentAngle = Math.min(45, Math.max(0, Math.abs(val)));
-                updateDisplay();
-            }
-        });
-        
-        resetBtn.addEventListener('click', resetAngle);
-        
-        // 页面加载
-        window.addEventListener('load', () => {
-            generateTicks();
-            updateDisplay();
+
+        // ===== 计算函数 =====
+        function calculate() {
+            let D = parseFloat(distanceInput.value) || 0;
+            let angle = currentMode === 'manual' ? parseFloat(manualAngleInput.value) || 0 : currentAngle;
             
-            // 陀螺仪在切换到罗盘模式时启动（iOS需要用户点击触发权限请求）
-            let gyroStarted = false;
-            async function startGyro() {
-                if (gyroStarted) return;
-                if ('DeviceOrientationEvent' in window) {
-                    const isIOS = typeof DeviceOrientationEvent.requestPermission === 'function';
-                    if (isIOS) {
-                        try {
-                            const perm = await DeviceOrientationEvent.requestPermission();
-                            if (perm === 'granted') {
-                                window.addEventListener('deviceorientation', handleOrientation);
-                                gyroStarted = true;
-                            }
-                        } catch (e) {
-                            console.log('陀螺仪权限被拒绝');
-                        }
-                    } else {
-                        window.addEventListener('deviceorientation', handleOrientation);
-                        gyroStarted = true;
-                    }
+            let radians = angle * Math.PI / 180;
+            let actualLength = D / Math.cos(radians);
+            let deviation = actualLength - D;
+            
+            return { D, angle, actualLength, deviation };
+        }
+
+        // ===== 更新显示 =====
+        function updateDisplay() {
+            let result = calculate();
+            
+            // 更新角度显示
+            if (currentMode === 'manual') {
+                let sliderVal = parseFloat(angleSlider.value);
+                let inputVal = parseFloat(manualAngleInput.value) || 0;
+                let showAngle = inputVal;
+                
+                manualAngleDisplay.textContent = showAngle.toFixed(1) + '°';
+                result.angle = showAngle;
+            } else {
+                compassAngleDisplay.textContent = currentAngle.toFixed(1) + '°';
+                compassPointer.style.transform = 'translate(-50%, -100%) rotate(' + currentAngle + 'deg)';
+                result.angle = currentAngle;
+            }
+            
+            // 重新计算
+            let D = result.D;
+            let angle = result.angle;
+            let radians = angle * Math.PI / 180;
+            let actualLength = D / Math.cos(radians);
+            let deviation = actualLength - D;
+            
+            // 显示伸长偏差
+            deviationValue.textContent = deviation.toFixed(3);
+            ropeLengthValue.textContent = actualLength.toFixed(3);
+            
+            // 安全判定
+            if (deviation <= 0.3) {
+                safetyResult.className = 'safety-ok';
+                safetyResult.textContent = '✓ 安全';
+            } else {
+                safetyResult.className = 'safety-fail';
+                safetyResult.textContent = '❌ 超标禁止施工';
+            }
+            
+            // 最大安全偏角
+            if (D > 0) {
+                let ratio = D / (D + 0.3);
+                if (ratio >= -1 && ratio <= 1) {
+                    let maxAngle = Math.acos(ratio) * 180 / Math.PI;
+                    maxAngleValue.textContent = '最大安全偏角 ' + maxAngle.toFixed(2) + '°';
+                } else {
+                    maxAngleValue.textContent = '最大安全偏角 >90°';
                 }
+            } else {
+                maxAngleValue.textContent = '--';
             }
+        }
+
+        // ===== 手动模式事件 =====
+        angleSlider.addEventListener('input', function() {
+            manualAngleInput.value = this.value;
+            updateDisplay();
         });
-        
-        // 页面可见性变化
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-                baseAlpha = null;
-                alphaHistory = [];
-            }
+
+        manualAngleInput.addEventListener('input', function() {
+            let val = parseFloat(this.value) || 0;
+            if (val < 0) val = 0;
+            if (val > 45) val = 45;
+            this.value = val;
+            angleSlider.value = val;
+            updateDisplay();
         });
+
+        distanceInput.addEventListener('input', updateDisplay);
+
+        // ===== 初始化 =====
+        updateDisplay();
     </script>
 </body>
 </html>
