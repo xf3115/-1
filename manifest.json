@@ -1,0 +1,20 @@
+{
+  "name": "乐东英歌海扭王块吊装软件",
+  "short_name": "英歌海吊装",
+  "description": "乐东英歌海扭王块吊装施工安全计算器 - 支持罗盘测角",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect fill='%231a1a2e' width='512' height='512' rx='64'/%3E%3Cpath fill='%23FFD700' d='M256 80L336 432H176L256 80z'/%3E%3Crect fill='%23FFD700' x='196' y='360' width='120' height='32'/%3E%3Ccircle fill='none' stroke='%2300FF88' stroke-width='24' cx='256' cy='240' r='180'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "productivity"],
+  "lang": "zh-CN"
+}
