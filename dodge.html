@@ -688,7 +688,7 @@
 
         function updateObstacles() {
             obstacles.forEach(obs => {
-                obs.z -= speed * 0.003;
+                obs.z -= speed * 0.005;
             });
 
             // 移除超出范围的障碍物
@@ -696,7 +696,7 @@
         }
 
         function checkCollisions() {
-            const playerZ = 0.85; // 玩家位置
+            const playerZ = 0.9; // 玩家位置
             const collisionThreshold = 0.1;
 
             obstacles.forEach(obs => {
