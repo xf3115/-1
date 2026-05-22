@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a1a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>极速闪避</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #0a0a1a;
+            overflow: hidden;
+            touch-action: none;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            user-select: none;
+        }
+
+        #gameContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* 星空背景 */
+        #stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* 顶部UI */
+        #topUI {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .score-box {
+            text-align: center;
+        }
+
+        .score-label {
+            font-size: 12px;
+            color: #00CED1;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px #00CED1;
+        }
+
+        .score-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 0 0 20px #FFD700, 0 0 40px #FFD700;
+        }
+
+        #highScore .score-value {
+            color: #FF6B6B;
+            text-shadow: 0 0 20px #FF6B6B;
+            font-size: 24px;
+        }
+
+        /* 游戏画布 */
+        #gameCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        /* 开始界面 */
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            background: radial-gradient(ellipse at center, #1a1a3a 0%, #0a0a1a 100%);
+        }
+
+        .game-title {
+            font-size: 48px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 0 0 30px #FFD700, 0 0 60px #FF8C00, 0 0 90px #FF4500;
+            margin-bottom: 20px;
+            animation: titlePulse 2s ease-in-out infinite;
+            text-align: center;
+        }
+
+        @keyframes titlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #00CED1;
+            text-shadow: 0 0 15px #00CED1;
+            margin-bottom: 50px;
+            letter-spacing: 5px;
+        }
+
+        .start-btn {
+            padding: 15px 60px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #0a0a1a;
+            background: linear-gradient(135deg, #FFD700, #FF8C00);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 0 30px #FFD700, 0 0 60px rgba(255, 215, 0, 0.5);
+            transition: all 0.3s ease;
+            pointer-events: auto;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 50px #FFD700, 0 0 100px rgba(255, 215, 0, 0.7);
+        }
+
+        .start-btn:active {
+            transform: scale(0.95);
+        }
+
+        .best-score {
+            margin-top: 40px;
+            font-size: 18px;
+            color: #FF6B6B;
+            text-shadow: 0 0 15px #FF6B6B;
+        }
+
+        .controls-hint {
+            position: absolute;
+            bottom: 80px;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+            line-height: 1.8;
+        }
+
+        /* 结束界面 */
+        #endScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            background: rgba(10, 10, 26, 0.95);
+        }
+
+        .game-over-title {
+            font-size: 42px;
+            font-weight: bold;
+            color: #FF4444;
+            text-shadow: 0 0 30px #FF4444, 0 0 60px #FF0000;
+            margin-bottom: 30px;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .final-score {
+            font-size: 60px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 0 0 40px #FFD700;
+            margin-bottom: 10px;
+        }
+
+        .final-score-label {
+            font-size: 18px;
+            color: #00CED1;
+            margin-bottom: 30px;
+        }
+
+        .new-record {
+            font-size: 24px;
+            color: #FF6B6B;
+            text-shadow: 0 0 20px #FF6B6B;
+            animation: blink 0.5s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .restart-btn {
+            padding: 15px 60px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #0a0a1a;
+            background: linear-gradient(135deg, #00CED1, #00BFFF);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 0 30px #00CED1, 0 0 60px rgba(0, 206, 209, 0.5);
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 50px #00CED1, 0 0 100px rgba(0, 206, 209, 0.7);
+        }
+
+        /* 触摸区域提示 */
+        #touchHint {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 120px;
+            display: none;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .touch-zone {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.2);
+            letter-spacing: 2px;
+        }
+
+        .touch-zone.left {
+            left: 0;
+            width: 50%;
+            border-right: 1px dashed rgba(0, 206, 209, 0.1);
+        }
+
+        .touch-zone.right {
+            right: 0;
+            width: 50%;
+        }
+
+        /* 速度指示器 */
+        #speedIndicator {
+            position: fixed;
+            bottom: 130px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 5px 15px;
+            font-size: 12px;
+            color: #FF8C00;
+            text-shadow: 0 0 10px #FF8C00;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        @media (max-width: 480px) {
+            .game-title {
+                font-size: 36px;
+            }
+            .score-value {
+                font-size: 24px;
+            }
+            #highScore .score-value {
+                font-size: 18px;
+            }
+            .final-score {
+                font-size: 48px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <!-- 星空背景 -->
+        <canvas id="stars"></canvas>
+        
+        <!-- 游戏画布 -->
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- 顶部UI -->
+        <div id="topUI" style="display: none;">
+            <div class="score-box" id="currentScore">
+                <div class="score-label">分数</div>
+                <div class="score-value">0</div>
+            </div>
+            <div class="score-box" id="highScore">
+                <div class="score-label">最高</div>
+                <div class="score-value">0</div>
+            </div>
+        </div>
+
+        <!-- 速度指示器 -->
+        <div id="speedIndicator"></div>
+
+        <!-- 触摸区域提示 -->
+        <div id="touchHint">
+            <div class="touch-zone left">← 左滑</div>
+            <div class="touch-zone right">右滑 →</div>
+        </div>
+
+        <!-- 开始界面 -->
+        <div id="startScreen">
+            <div class="game-title">极速闪避</div>
+            <div class="subtitle">NEON DASH</div>
+            <button class="start-btn" id="startBtn">开始游戏</button>
+            <div class="best-score" id="bestScore">最高分: 0</div>
+            <div class="controls-hint">
+                手机: 点击/滑动屏幕左右两侧<br>
+                电脑: ← → 或 A D 键移动
+            </div>
+        </div>
+
+        <!-- 结束界面 -->
+        <div id="endScreen">
+            <div class="game-over-title">GAME OVER</div>
+            <div class="final-score" id="finalScore">0</div>
+            <div class="final-score-label">本局得分</div>
+            <div class="new-record" id="newRecord" style="display: none;">🎉 新纪录！</div>
+            <div class="best-score" id="endBestScore">最高分: 0</div>
+            <button class="restart-btn" id="restartBtn">再来一次</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 游戏配置 ====================
+        const CONFIG = {
+            LANE_COUNT: 3,
+            BASE_SPEED: 5,
+            SPEED_INCREMENT: 0.1,
+            SPEED_INCREMENT_INTERVAL: 10000,
+            OBSTACLE_SPAWN_INTERVAL: 1500,
+            MIN_OBSTACLE_SPAWN_INTERVAL: 400,
+            PERSPECTIVE: 1000,
+            HORIZON_Y: 0.35,
+            ROAD_WIDTH: 300,
+            PLAYER_SIZE: 40,
+            OBSTACLE_WIDTH: 50,
+            OBSTACLE_HEIGHT: 60,
+            DOUBLE_OBSTACLE_CHANCE: 0.3,
+            DOUBLE_OBSTACLE_START_TIME: 30000,
+            COLORS: {
+                ROAD: '#1a1a2e',
+                ROAD_EDGE: '#00CED1',
+                ROAD_LINE: 'rgba(0, 206, 209, 0.3)',
+                PLAYER: '#FFD700',
+                PLAYER_GLOW: 'rgba(255, 215, 0, 0.5)',
+                OBSTACLE: '#FF4444',
+                OBSTACLE_GLOW: 'rgba(255, 68, 68, 0.5)',
+                OBSTACLE_TRIANGLE: '#FF6B6B'
+            }
+        };
+
+        // ==================== 游戏状态 ====================
+        let canvas, ctx, starsCanvas, starsCtx;
+        let gameState = 'start'; // start, playing, end
+        let score = 0;
+        let highScore = 0;
+        let gameTime = 0;
+        let lastTime = 0;
+        let speed = CONFIG.BASE_SPEED;
+        let spawnInterval = CONFIG.OBSTACLE_SPAWN_INTERVAL;
+        let lastSpawnTime = 0;
+        let obstacles = [];
+        let player = {
+            lane: 1,
+            targetLane: 1,
+            x: 0,
+            y: 0,
+            laneTransition: 0
+        };
+        let roadOffset = 0;
+
+        // ==================== 初始化 ====================
+        function init() {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            starsCanvas = document.getElementById('stars');
+            starsCtx = starsCanvas.getContext('2d');
+
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            loadHighScore();
+            initStars();
+            setupControls();
+
+            document.getElementById('startBtn').addEventListener('click', startGame);
+            document.getElementById('restartBtn').addEventListener('click', startGame);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            starsCanvas.width = window.innerWidth;
+            starsCanvas.height = window.innerHeight;
+        }
+
+        function loadHighScore() {
+            const saved = localStorage.getItem('neonDashHighScore');
+            highScore = saved ? parseInt(saved) : 0;
+            document.getElementById('bestScore').textContent = `最高分: ${highScore}`;
+            document.getElementById('highScore').querySelector('.score-value').textContent = highScore;
+        }
+
+        function saveHighScore() {
+            localStorage.setItem('neonDashHighScore', highScore.toString());
+        }
+
+        // ==================== 星空背景 ====================
+        let stars = [];
+
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < 200; i++) {
+                stars.push({
+                    x: Math.random() * window.innerWidth,
+                    y: Math.random() * window.innerHeight,
+                    size: Math.random() * 2 + 0.5,
+                    speed: Math.random() * 0.5 + 0.2,
+                    opacity: Math.random() * 0.8 + 0.2
+                });
+            }
+        }
+
+        function drawStars() {
+            starsCtx.fillStyle = '#0a0a1a';
+            starsCtx.fillRect(0, 0, starsCanvas.width, starsCanvas.height);
+
+            stars.forEach(star => {
+                star.y += star.speed;
+                if (star.y > starsCanvas.height) {
+                    star.y = 0;
+                    star.x = Math.random() * starsCanvas.width;
+                }
+
+                starsCtx.beginPath();
+                starsCtx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                starsCtx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+                starsCtx.fill();
+            });
+        }
+
+        // ==================== 控制设置 ====================
+        function setupControls() {
+            // 键盘控制
+            document.addEventListener('keydown', (e) => {
+                if (gameState !== 'playing') return;
+                
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                    movePlayer(-1);
+                } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                    movePlayer(1);
+                }
+            });
+
+            // 触摸控制
+            let touchStartX = 0;
+            let touchStartY = 0;
+
+            canvas.addEventListener('touchstart', (e) => {
+                if (gameState !== 'playing') return;
+                e.preventDefault();
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }, { passive: false });
+
+            canvas.addEventListener('touchmove', (e) => {
+                if (gameState !== 'playing') return;
+                e.preventDefault();
+            }, { passive: false });
+
+            canvas.addEventListener('touchend', (e) => {
+                if (gameState !== 'playing') return;
+                e.preventDefault();
+                
+                const touchEndX = e.changedTouches[0].clientX;
+                const touchEndY = e.changedTouches[0].clientY;
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+
+                // 判断是滑动还是点击
+                if (Math.abs(deltaX) > 30 || Math.abs(deltaY) > 30) {
+                    // 滑动
+                    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                        movePlayer(deltaX > 0 ? 1 : -1);
+                    }
+                } else {
+                    // 点击
+                    const screenWidth = window.innerWidth;
+                    if (touchEndX < screenWidth / 2) {
+                        movePlayer(-1);
+                    } else {
+                        movePlayer(1);
+                    }
+                }
+            }, { passive: false });
+
+            // 鼠标点击（桌面端）
+            canvas.addEventListener('click', (e) => {
+                if (gameState !== 'playing') return;
+                const screenWidth = window.innerWidth;
+                if (e.clientX < screenWidth / 2) {
+                    movePlayer(-1);
+                } else {
+                    movePlayer(1);
+                }
+            });
+        }
+
+        function movePlayer(direction) {
+            const newLane = player.targetLane + direction;
+            if (newLane >= 0 && newLane < CONFIG.LANE_COUNT) {
+                player.targetLane = newLane;
+            }
+        }
+
+        // ==================== 游戏流程 ====================
+        function startGame() {
+            gameState = 'playing';
+            score = 0;
+            gameTime = 0;
+            speed = CONFIG.BASE_SPEED;
+            spawnInterval = CONFIG.OBSTACLE_SPAWN_INTERVAL;
+            lastSpawnTime = 0;
+            obstacles = [];
+            player.lane = 1;
+            player.targetLane = 1;
+            player.laneTransition = 0;
+
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('endScreen').style.display = 'none';
+            document.getElementById('topUI').style.display = 'flex';
+            document.getElementById('touchHint').style.display = 'block';
+            document.getElementById('speedIndicator').style.opacity = '1';
+        }
+
+        function endGame() {
+            gameState = 'end';
+
+            const isNewRecord = score > highScore;
+            if (isNewRecord) {
+                highScore = score;
+                saveHighScore();
+            }
+
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('endBestScore').textContent = `最高分: ${highScore}`;
+            document.getElementById('newRecord').style.display = isNewRecord ? 'block' : 'none';
+            document.getElementById('endScreen').style.display = 'flex';
+            document.getElementById('topUI').style.display = 'none';
+            document.getElementById('touchHint').style.display = 'none';
+            document.getElementById('speedIndicator').style.opacity = '0';
+        }
+
+        // ==================== 游戏循环 ====================
+        function gameLoop(timestamp) {
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+
+            drawStars();
+
+            if (gameState === 'playing') {
+                update(deltaTime);
+            }
+
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function update(deltaTime) {
+            gameTime += deltaTime;
+
+            // 更新分数
+            score = Math.floor(gameTime / 100);
+            document.querySelector('#currentScore .score-value').textContent = score;
+
+            // 增加难度
+            const speedLevel = Math.floor(gameTime / CONFIG.SPEED_INCREMENT_INTERVAL);
+            speed = CONFIG.BASE_SPEED * (1 + speedLevel * CONFIG.SPEED_INCREMENT);
+            spawnInterval = Math.max(
+                CONFIG.MIN_OBSTACLE_SPAWN_INTERVAL,
+                CONFIG.OBSTACLE_SPAWN_INTERVAL - speedLevel * 100
+            );
+
+            // 更新速度指示器
+            const speedPercent = Math.floor((speed / CONFIG.BASE_SPEED - 1) * 100);
+            if (speedPercent > 0) {
+                document.getElementById('speedIndicator').textContent = `速度 +${speedPercent}%`;
+            }
+
+            // 生成障碍物
+            if (gameTime - lastSpawnTime > spawnInterval) {
+                spawnObstacle();
+                lastSpawnTime = gameTime;
+            }
+
+            // 更新玩家位置
+            if (player.lane !== player.targetLane) {
+                player.laneTransition += 0.15;
+                if (player.laneTransition >= 1) {
+                    player.lane = player.targetLane;
+                    player.laneTransition = 0;
+                }
+            }
+
+            // 更新障碍物
+            updateObstacles();
+
+            // 更新道路偏移
+            roadOffset = (roadOffset + speed * 2) % 100;
+
+            // 检查碰撞
+            checkCollisions();
+        }
+
+        function spawnObstacle() {
+            const canSpawnDouble = gameTime > CONFIG.DOUBLE_OBSTACLE_START_TIME && 
+                                   Math.random() < CONFIG.DOUBLE_OBSTACLE_CHANCE;
+
+            if (canSpawnDouble) {
+                // 生成双障碍
+                const blockedLanes = [
+                    Math.floor(Math.random() * CONFIG.LANE_COUNT),
+                    (Math.floor(Math.random() * (CONFIG.LANE_COUNT - 1)) + blockedLanes[0] + 1) % CONFIG.LANE_COUNT
+                ];
+                blockedLanes.forEach(lane => {
+                    obstacles.push(createObstacle(lane));
+                });
+            } else {
+                // 单障碍
+                const lane = Math.floor(Math.random() * CONFIG.LANE_COUNT);
+                obstacles.push(createObstacle(lane));
+            }
+        }
+
+        function createObstacle(lane) {
+            return {
+                lane: lane,
+                z: 1, // 0 = 远处, 1 = 玩家位置
+                type: Math.random() > 0.5 ? 'box' : 'triangle'
+            };
+        }
+
+        function updateObstacles() {
+            obstacles.forEach(obs => {
+                obs.z -= speed * 0.003;
+            });
+
+            // 移除超出范围的障碍物
+            obstacles = obstacles.filter(obs => obs.z > -0.1);
+        }
+
+        function checkCollisions() {
+            const playerZ = 0.85; // 玩家位置
+            const collisionThreshold = 0.1;
+
+            obstacles.forEach(obs => {
+                if (Math.abs(obs.z - playerZ) < collisionThreshold) {
+                    // 检查是否在同一车道
+                    let currentLane = player.lane;
+                    if (player.laneTransition > 0) {
+                        currentLane = player.lane + (player.targetLane - player.lane) * player.laneTransition;
+                    }
+                    const laneDiff = Math.abs(currentLane - obs.lane);
+                    
+                    if (laneDiff < 0.5) {
+                        endGame();
+                    }
+                }
+            });
+        }
+
+        // ==================== 渲染 ====================
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (gameState === 'playing' || gameState === 'end') {
+                drawRoad();
+                drawPlayer();
+                drawObstacles();
+            }
+        }
+
+        function drawRoad() {
+            const centerX = canvas.width / 2;
+            const horizonY = canvas.height * CONFIG.HORIZON_Y;
+            const roadBottom = canvas.height;
+
+            // 透视计算
+            const topWidth = CONFIG.ROAD_WIDTH * 0.3;
+            const bottomWidth = CONFIG.ROAD_WIDTH * 1.5;
+
+            // 绘制道路渐变背景
+            const roadGradient = ctx.createLinearGradient(0, horizonY, 0, roadBottom);
+            roadGradient.addColorStop(0, '#0d0d1a');
+            roadGradient.addColorStop(1, CONFIG.COLORS.ROAD);
+
+            ctx.beginPath();
+            ctx.moveTo(centerX - topWidth / 2, horizonY);
+            ctx.lineTo(centerX + topWidth / 2, horizonY);
+            ctx.lineTo(centerX + bottomWidth / 2, roadBottom);
+            ctx.lineTo(centerX - bottomWidth / 2, roadBottom);
+            ctx.closePath();
+            ctx.fillStyle = roadGradient;
+            ctx.fill();
+
+            // 绘制道路边线（发光效果）
+            ctx.strokeStyle = CONFIG.COLORS.ROAD_EDGE;
+            ctx.lineWidth = 3;
+            ctx.shadowColor = CONFIG.COLORS.ROAD_EDGE;
+            ctx.shadowBlur = 20;
+
+            // 左边线
+            ctx.beginPath();
+            ctx.moveTo(centerX - topWidth / 2, horizonY);
+            ctx.lineTo(centerX - bottomWidth / 2, roadBottom);
+            ctx.stroke();
+
+            // 右边线
+            ctx.beginPath();
+            ctx.moveTo(centerX + topWidth / 2, horizonY);
+            ctx.lineTo(centerX + bottomWidth / 2, roadBottom);
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+
+            // 绘制车道分隔线
+            for (let i = 1; i < CONFIG.LANE_COUNT; i++) {
+                const laneRatio = i / CONFIG.LANE_COUNT;
+                const topLaneX = centerX - topWidth / 2 + topWidth * laneRatio;
+                const bottomLaneX = centerX - bottomWidth / 2 + bottomWidth * laneRatio;
+
+                // 动态线条效果
+                const lineOffset = (roadOffset / 100 + laneRatio) % 1;
+                
+                ctx.strokeStyle = `rgba(0, 206, 209, ${0.2 + Math.sin(lineOffset * Math.PI * 2) * 0.1})`;
+                ctx.lineWidth = 2;
+                ctx.setLineDash([20, 30]);
+                ctx.lineDashOffset = -roadOffset * 3;
+
+                ctx.beginPath();
+                ctx.moveTo(topLaneX, horizonY);
+                ctx.lineTo(bottomLaneX, roadBottom);
+                ctx.stroke();
+
+                ctx.setLineDash([]);
+            }
+
+            // 绘制远处的虚线（增强透视感）
+            for (let z = 0; z < 1; z += 0.1) {
+                const scale = Math.pow(z, 0.7);
+                const y = horizonY + (roadBottom - horizonY) * scale;
+                const width = topWidth + (bottomWidth - topWidth) * scale;
+                
+                ctx.strokeStyle = `rgba(0, 206, 209, ${0.1 * (1 - z)})`;
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 15]);
+                
+                ctx.beginPath();
+                ctx.moveTo(centerX - width / 2, y);
+                ctx.lineTo(centerX + width / 2, y);
+                ctx.stroke();
+                
+                ctx.setLineDash([]);
+            }
+        }
+
+        function getLaneX(lane, z) {
+            const centerX = canvas.width / 2;
+            const horizonY = canvas.height * CONFIG.HORIZON_Y;
+            const roadBottom = canvas.height;
+
+            const topWidth = CONFIG.ROAD_WIDTH * 0.3;
+            const bottomWidth = CONFIG.ROAD_WIDTH * 1.5;
+
+            const scale = Math.pow(z, 0.7);
+            const roadY = horizonY + (roadBottom - horizonY) * scale;
+            const roadWidth = topWidth + (bottomWidth - topWidth) * scale;
+
+            const laneRatio = (lane + 0.5) / CONFIG.LANE_COUNT;
+            return centerX - roadWidth / 2 + roadWidth * laneRatio;
+        }
+
+        function getScale(z) {
+            return Math.pow(z, 0.7);
+        }
+
+        function drawPlayer() {
+            const centerX = canvas.width / 2;
+            const horizonY = canvas.height * CONFIG.HORIZON_Y;
+            const roadBottom = canvas.height;
+
+            // 计算玩家当前车道位置
+            let currentLane = player.lane;
+            if (player.lane !== player.targetLane) {
+                currentLane = player.lane + (player.targetLane - player.lane) * easeOutCubic(player.laneTransition);
+            }
+
+            const z = 0.85;
+            const playerX = getLaneX(currentLane, z);
+            const scale = getScale(z);
+            const playerY = horizonY + (roadBottom - horizonY) * scale;
+            const size = CONFIG.PLAYER_SIZE * scale;
+
+            // 发光效果
+            ctx.shadowColor = CONFIG.COLORS.PLAYER;
+            ctx.shadowBlur = 30 * scale;
+
+            // 绘制玩家（小人形状）
+            ctx.fillStyle = CONFIG.COLORS.PLAYER;
+
+            // 身体
+            ctx.beginPath();
+            ctx.roundRect(playerX - size * 0.3, playerY - size * 0.8, size * 0.6, size * 0.6, size * 0.1);
+            ctx.fill();
+
+            // 头
+            ctx.beginPath();
+            ctx.arc(playerX, playerY - size * 1.1, size * 0.25, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 腿
+            ctx.fillRect(playerX - size * 0.25, playerY - size * 0.2, size * 0.15, size * 0.3);
+            ctx.fillRect(playerX + size * 0.1, playerY - size * 0.2, size * 0.15, size * 0.3);
+
+            // 脚部发光
+            ctx.beginPath();
+            ctx.ellipse(playerX, playerY + size * 0.1, size * 0.3, size * 0.1, 0, 0, Math.PI * 2);
+            ctx.fillStyle = CONFIG.COLORS.PLAYER_GLOW;
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+        }
+
+        function drawObstacles() {
+            // 按 z 排序，从远到近绘制
+            const sortedObstacles = [...obstacles].sort((a, b) => a.z - b.z);
+
+            sortedObstacles.forEach(obs => {
+                if (obs.z < 0 || obs.z > 1.2) return;
+
+                const x = getLaneX(obs.lane, obs.z);
+                const scale = getScale(obs.z);
+                const horizonY = canvas.height * CONFIG.HORIZON_Y;
+                const roadBottom = canvas.height;
+                const y = horizonY + (roadBottom - horizonY) * obs.z;
+
+                const width = CONFIG.OBSTACLE_WIDTH * scale;
+                const height = CONFIG.OBSTACLE_HEIGHT * scale;
+
+                // 发光效果
+                ctx.shadowColor = CONFIG.COLORS.OBSTACLE;
+                ctx.shadowBlur = 20 * scale;
+
+                if (obs.type === 'box') {
+                    // 绘制方块障碍物
+                    ctx.fillStyle = CONFIG.COLORS.OBSTACLE;
+                    ctx.fillRect(x - width / 2, y - height, width, height);
+                    
+                    // 高光
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.fillRect(x - width / 2, y - height, width * 0.3, height * 0.3);
+                } else {
+                    // 绘制三角形障碍物
+                    ctx.fillStyle = CONFIG.COLORS.OBSTACLE_TRIANGLE;
+                    ctx.beginPath();
+                    ctx.moveTo(x, y - height);
+                    ctx.lineTo(x - width / 2, y);
+                    ctx.lineTo(x + width / 2, y);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        function easeOutCubic(t) {
+            return 1 - Math.pow(1 - t, 3);
+        }
+
+        // 启动游戏
+        init();
+    </script>
+</body>
+</html>
