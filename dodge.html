@@ -619,9 +619,24 @@
             score = Math.floor(gameTime / 100);
             document.querySelector('#currentScore .score-value').textContent = score;
 
-            // 增加难度
-            const speedLevel = Math.floor(gameTime / CONFIG.SPEED_INCREMENT_INTERVAL);
-            speed = CONFIG.BASE_SPEED * (1 + speedLevel * CONFIG.SPEED_INCREMENT);
+            // 速度按分数渐进：10000分内慢，之后逐渐加速
+            const score = parseInt(document.getElementById('score').textContent) || 0;
+            if (score < 10000) {
+                // 10000分以内：速度很慢，只加5%
+                speed = CONFIG.BASE_SPEED * 1.05;
+            } else if (score < 30000) {
+                // 10000-30000分：慢慢加速到1.3倍
+                speed = CONFIG.BASE_SPEED * (1.05 + (score - 10000) / 20000 * 0.25);
+            } else if (score < 60000) {
+                // 30000-60000分：加速到1.6倍
+                speed = CONFIG.BASE_SPEED * (1.3 + (score - 30000) / 30000 * 0.3);
+            } else if (score < 100000) {
+                // 60000-100000分：加速到2倍
+                speed = CONFIG.BASE_SPEED * (1.6 + (score - 60000) / 40000 * 0.4);
+            } else {
+                // 100000分以上：继续加速，最高3倍
+                speed = Math.min(CONFIG.BASE_SPEED * 3, CONFIG.BASE_SPEED * (2 + (score - 100000) / 100000 * 0.5));
+            }
             spawnInterval = Math.max(
                 CONFIG.MIN_OBSTACLE_SPAWN_INTERVAL,
                 CONFIG.OBSTACLE_SPAWN_INTERVAL - speedLevel * 100
@@ -681,18 +696,18 @@
         function createObstacle(lane) {
             return {
                 lane: lane,
-                z: 1, // 0 = 远处, 1 = 玩家位置
+                z: 0.02, // 从远处(前方)飞来
                 type: Math.random() > 0.5 ? 'box' : 'triangle'
             };
         }
 
         function updateObstacles() {
             obstacles.forEach(obs => {
-                obs.z -= speed * 0.005;
+                obs.z += speed * 0.004;
             });
 
             // 移除超出范围的障碍物
-            obstacles = obstacles.filter(obs => obs.z > -0.1);
+            obstacles = obstacles.filter(obs => obs.z < 1.3);
         }
 
         function checkCollisions() {
@@ -882,7 +897,7 @@
             const sortedObstacles = [...obstacles].sort((a, b) => a.z - b.z);
 
             sortedObstacles.forEach(obs => {
-                if (obs.z < 0 || obs.z > 1.2) return;
+                if (obs.z < 0 || obs.z > 1.1) return;
 
                 const x = getLaneX(obs.lane, obs.z);
                 const scale = getScale(obs.z);
