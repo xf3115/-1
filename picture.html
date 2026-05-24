@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>智能P图改字</title>
+<script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:#0a0a0a;color:#e0e0e0;font-family:-apple-system,sans-serif;overflow:hidden;height:100vh;height:100dvh;display:flex;flex-direction:column;touch-action:none}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#111;border-bottom:1px solid #333;flex-shrink:0;z-index:10}
+.topbar h1{font-size:15px;color:#ff6b00;text-shadow:0 0 10px rgba(255,107,0,.5)}
+.topbar-btns{display:flex;gap:5px}
+.tbtn{background:#222;border:1px solid #444;color:#ddd;padding:5px 10px;border-radius:5px;font-size:12px;cursor:pointer}
+.tbtn:active{background:#ff6b00;color:#000;border-color:#ff6b00}
+.tbtn.on{background:#ff6b00;color:#000;border-color:#ff6b00}
+.tbtn.primary{background:#ff6b00;color:#000;border-color:#ff6b00;font-weight:bold}
+
+.canvas-area{flex:1;position:relative;overflow:hidden;background:#111;display:flex;align-items:center;justify-content:center}
+#mainCanvas{display:none}
+.canvas-area img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+
+/* 上传 */
+.upload-mask{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.9);z-index:5}
+.upload-mask .icon{font-size:56px;margin-bottom:12px}
+.upload-mask p{color:#888;font-size:13px;margin-top:8px}
+.big-btn{background:#ff6b00;color:#000;font-size:17px;font-weight:bold;padding:14px 40px;border:none;border-radius:10px;cursor:pointer;box-shadow:0 0 20px rgba(255,107,0,.4)}
+.big-btn:active{background:#cc5500}
+
+/* 文字框高亮 */
+.text-overlay{position:absolute;cursor:pointer;border:2px solid transparent;border-radius:3px;transition:border-color .15s,background .15s;z-index:3}
+.text-overlay:hover,.text-overlay:active{border-color:#ff6b00;background:rgba(255,107,0,.15)}
+.text-overlay .label{position:absolute;top:-18px;left:0;font-size:10px;background:#ff6b00;color:#000;padding:1px 5px;border-radius:3px;white-space:nowrap;display:none}
+.text-overlay:hover .label,.text-overlay:active .label{display:block}
+
+/* 编辑面板 */
+.edit-panel{position:fixed;bottom:0;left:0;right:0;background:#181818;border-top:2px solid #ff6b00;padding:12px;z-index:20;display:none;animation:slideUp .2s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.edit-panel .row{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.edit-panel .row:last-child{margin-bottom:0}
+.edit-panel label{font-size:12px;color:#999;min-width:38px}
+.edit-panel input[type=text]{flex:1;background:#1a1a1a;border:1px solid #444;color:#fff;padding:7px 10px;border-radius:6px;font-size:15px;outline:none}
+.edit-panel input[type=text]:focus{border-color:#ff6b00}
+.edit-panel input[type=range]{flex:1;accent-color:#ff6b00}
+.edit-panel .val{font-size:12px;color:#ff6b00;min-width:28px;text-align:right}
+.orig-info{font-size:11px;color:#888;margin-bottom:6px;padding:4px 8px;background:#1a1a1a;border-radius:4px}
+.orig-info span{color:#ff6b00;font-weight:bold}
+.color-row{display:flex;align-items:center;gap:6px}
+.cdot{width:24px;height:24px;border-radius:50%;border:2px solid #555;cursor:pointer;flex-shrink:0}
+.cdot:active,.cdot.on{border-color:#ff6b00}
+.cpreview{width:24px;height:24px;border-radius:50%;border:2px solid #ff6b00;flex-shrink:0}
+.btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+
+/* 进度 */
+.progress-bar{position:absolute;top:0;left:0;right:0;height:3px;background:#222;z-index:8;display:none}
+.progress-bar .fill{height:100%;background:#ff6b00;width:0%;transition:width .3s}
+.progress-text{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#ff6b00;font-size:13px;padding:6px 16px;border-radius:20px;z-index:8;display:none;white-space:nowrap}
+
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(255,107,0,.95);color:#000;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:bold;z-index:99;display:none;white-space:nowrap}
+.toast.show{display:block;animation:toastAni 1.5s ease}
+@keyframes toastAni{0%{opacity:0;transform:translateX(-50%) translateY(10px)}15%{opacity:1;transform:translateX(-50%) translateY(0)}85%{opacity:1}100%{opacity:0}}
+
+#fileInput{display:none}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>⚡ 智能P图改字</h1>
+  <div class="topbar-btns">
+    <button class="tbtn" id="btnUndo">↩撤销</button>
+    <button class="tbtn" id="btnReOCR">🔍重识别</button>
+    <button class="tbtn primary" id="btnSave">💾保存</button>
+  </div>
+</div>
+
+<div class="canvas-area" id="canvasArea">
+  <div class="upload-mask" id="uploadMask">
+    <div class="icon">📷</div>
+    <button class="big-btn" id="btnUpload">上传图片</button>
+    <p>自动识别文字，点击即可修改</p>
+  </div>
+  <canvas id="mainCanvas"></canvas>
+  <div class="progress-bar" id="progressBar"><div class="fill" id="progressFill"></div></div>
+  <div class="progress-text" id="progressText"></div>
+</div>
+
+<!-- 编辑面板 -->
+<div class="edit-panel" id="editPanel">
+  <div class="orig-info" id="origInfo">原文：<span id="origText">-</span> ｜ 字号：<span id="origSize">-</span> ｜ 颜色：<span id="origColor">-</span></div>
+  <div class="row">
+    <label>新文字</label>
+    <input type="text" id="inputText" placeholder="输入替换内容">
+  </div>
+  <div class="row">
+    <label>字号</label>
+    <input type="range" id="fontSizeSlider" min="6" max="200" value="24">
+    <span class="val" id="fontSizeVal">24</span>
+    <label>粗细</label>
+    <input type="range" id="fontWeightSlider" min="100" max="900" step="100" value="700" style="width:80px">
+    <span class="val" id="fontWeightVal">粗</span>
+  </div>
+  <div class="row color-row">
+    <label>颜色</label>
+    <div class="cpreview" id="colorPreview" style="background:#fff"></div>
+    <input type="color" id="colorPicker" value="#ffffff" style="width:0;height:0;opacity:0;position:absolute">
+    <div class="cdot" style="background:#ffffff" data-c="#ffffff"></div>
+    <div class="cdot" style="background:#000000" data-c="#000000"></div>
+    <div class="cdot" style="background:#ff0000" data-c="#ff0000"></div>
+    <div class="cdot" style="background:#ff6b00" data-c="#ff6b00"></div>
+    <div class="cdot" style="background:#0066ff" data-c="#0066ff"></div>
+    <div class="cdot" style="background:#00aa00" data-c="#00aa00"></div>
+    <div class="cdot" style="background:#ffff00" data-c="#ffff00"></div>
+  </div>
+  <div class="btn-row">
+    <button class="tbtn" id="btnDeleteText">🗑 删除原文</button>
+    <button class="tbtn" id="btnCancelEdit">取消</button>
+    <button class="tbtn primary" id="btnApply">✅ 写入</button>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept="image/*">
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== 状态 =====
+const mainCanvas = document.getElementById('mainCanvas');
+const ctx = mainCanvas.getContext('2d');
+const area = document.getElementById('canvasArea');
+
+let img = null;
+let imgW = 0, imgH = 0;
+let dispScale = 1, offX = 0, offY = 0;
+let textRegions = []; // OCR结果
+let selectedRegion = null;
+let editColor = '#ffffff';
+let editFontSize = 24;
+let editFontWeight = 700;
+let historyStack = []; // ImageData
+const MAX_HIST = 20;
+
+// 离屏高清canvas
+let hiCanvas = null, hiCtx = null;
+function initHi() {
+  if (!hiCanvas) { hiCanvas = document.createElement('canvas'); hiCtx = hiCanvas.getContext('2d'); }
+  if (img && (hiCanvas.width !== imgW || hiCanvas.height !== imgH)) {
+    hiCanvas.width = imgW; hiCanvas.height = imgH;
+    hiCtx.drawImage(img, 0, 0, imgW, imgH);
+  }
+}
+
+// ===== 上传 =====
+document.getElementById('btnUpload').onclick = () => document.getElementById('fileInput').click();
+document.getElementById('fileInput').onchange = (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  loadFile(f);
+};
+
+// 粘贴
+document.addEventListener('paste', e => {
+  for (const item of (e.clipboardData?.items || [])) {
+    if (item.type.startsWith('image/')) { loadFile(item.getAsFile()); break; }
+  }
+});
+
+function loadFile(f) {
+  const r = new FileReader();
+  r.onload = ev => {
+    const i = new Image();
+    i.onload = () => {
+      img = i; imgW = i.naturalWidth; imgH = i.naturalHeight;
+      document.getElementById('uploadMask').style.display = 'none';
+      setupCanvas();
+      pushHistory();
+      runOCR();
+    };
+    i.src = ev.target.result;
+  };
+  r.readAsDataURL(f);
+}
+
+function setupCanvas() {
+  const w = area.clientWidth, h = area.clientHeight;
+  mainCanvas.width = w; mainCanvas.height = h;
+  dispScale = Math.min(w / imgW, h / imgH);
+  const dw = imgW * dispScale, dh = imgH * dispScale;
+  offX = (w - dw) / 2; offY = (h - dh) / 2;
+  drawMain();
+}
+
+function drawMain() {
+  ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+  ctx.fillStyle = '#111'; ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+  if (hiCanvas) {
+    ctx.drawImage(hiCanvas, offX, offY, imgW * dispScale, imgH * dispScale);
+  } else if (img) {
+    ctx.drawImage(img, offX, offY, imgW * dispScale, imgH * dispScale);
+  }
+}
+
+// ===== OCR =====
+async function runOCR() {
+  clearTextOverlays();
+  const pb = document.getElementById('progressBar');
+  const pf = document.getElementById('progressFill');
+  const pt = document.getElementById('progressText');
+  pb.style.display = 'block'; pt.style.display = 'block';
+  pt.textContent = '🔍 正在识别文字...';
+  pf.style.width = '0%';
+
+  try {
+    const result = await Tesseract.recognize(img, 'chi_sim+eng', {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          const pct = Math.round((m.progress || 0) * 100);
+          pf.style.width = pct + '%';
+          pt.textContent = '🔍 识别中 ' + pct + '%';
+        }
+      }
+    });
+
+    textRegions = [];
+    const words = result.data.words || [];
+    for (const w of words) {
+      if (!w.text || !w.text.trim()) continue;
+      const b = w.bbox;
+      textRegions.push({
+        text: w.text.trim(),
+        x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1,
+        fontSize: Math.round((b.y1 - b.y0) * 1.2), // 估算字号
+        color: '#ffffff' // 默认，后面取色
+      });
+    }
+
+    // 对每个区域取主色
+    initHi();
+    for (const r of textRegions) {
+      r.color = sampleColor(r);
+    }
+
+    pb.style.display = 'none'; pt.style.display = 'none';
+    renderTextOverlays();
+    toast('识别完成，发现 ' + textRegions.length + ' 处文字，点击即可编辑');
+  } catch (e) {
+    pb.style.display = 'none'; pt.style.display = 'none';
+    toast('识别失败，请重试');
+    console.error(e);
+  }
+}
+
+// 取文字区域主色
+function sampleColor(region) {
+  initHi();
+  const cx = Math.round((region.x0 + region.x1) / 2);
+  const cy = Math.round((region.y0 + region.y1) / 2);
+  const samples = [];
+  const sw = Math.max(1, Math.round((region.x1 - region.x0) * 0.6));
+  const sh = Math.max(1, Math.round((region.y1 - region.y0) * 0.6));
+  const sx = Math.max(0, cx - Math.round(sw / 2));
+  const sy = Math.max(0, cy - Math.round(sh / 2));
+  try {
+    const data = hiCtx.getImageData(sx, sy, Math.min(sw, imgW - sx), Math.min(sh, imgH - sy)).data;
+    // 找最亮的（文字通常是亮的）
+    let bestR = 0, bestG = 0, bestB = 0, maxLum = 0;
+    for (let i = 0; i < data.length; i += 16) { // 采样
+      const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+      if (a < 128) continue;
+      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      if (lum > maxLum) { maxLum = lum; bestR = r; bestG = g; bestB = b; }
+    }
+    if (maxLum > 50) {
+      return '#' + [bestR, bestG, bestB].map(v => v.toString(16).padStart(2, '0')).join('');
+    }
+    // 如果没亮色，取最暗的（可能是深色文字）
+    let minR = 255, minG = 255, minB = 255, minLum = 999;
+    for (let i = 0; i < data.length; i += 16) {
+      const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+      if (a < 128) continue;
+      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      if (lum < minLum) { minLum = lum; minR = r; minG = g; minB = b; }
+    }
+    return '#' + [minR, minG, minB].map(v => v.toString(16).padStart(2, '0')).join('');
+  } catch(e) {
+    return '#ffffff';
+  }
+}
+
+// ===== 文字框渲染 =====
+function renderTextOverlays() {
+  clearTextOverlays();
+  for (let i = 0; i < textRegions.length; i++) {
+    const r = textRegions[i];
+    const el = document.createElement('div');
+    el.className = 'text-overlay';
+    el.dataset.idx = i;
+    // 转换到显示坐标
+    const dx = r.x0 * dispScale + offX;
+    const dy = r.y0 * dispScale + offY;
+    const dw = (r.x1 - r.x0) * dispScale;
+    const dh = (r.y1 - r.y0) * dispScale;
+    el.style.cssText = `left:${dx}px;top:${dy}px;width:${dw}px;height:${dh}px`;
+    el.innerHTML = `<span class="label">${r.text}</span>`;
+    el.addEventListener('click', (e) => { e.stopPropagation(); selectRegion(i); });
+    area.appendChild(el);
+  }
+}
+
+function clearTextOverlays() {
+  area.querySelectorAll('.text-overlay').forEach(el => el.remove());
+}
+
+// ===== 选择区域 =====
+function selectRegion(idx) {
+  selectedRegion = textRegions[idx];
+  const r = selectedRegion;
+  editColor = r.color;
+  editFontSize = r.fontSize;
+  editFontWeight = 700;
+
+  // 更新UI
+  document.getElementById('origText').textContent = r.text;
+  document.getElementById('origSize').textContent = r.fontSize + 'px';
+  document.getElementById('origColor').textContent = r.color;
+  document.getElementById('inputText').value = r.text;
+  document.getElementById('fontSizeSlider').value = r.fontSize;
+  document.getElementById('fontSizeVal').textContent = r.fontSize;
+  document.getElementById('fontWeightSlider').value = 700;
+  document.getElementById('fontWeightVal').textContent = '粗';
+  setColor(r.color);
+
+  document.getElementById('editPanel').style.display = 'block';
+  document.getElementById('inputText').focus();
+}
+
+// ===== 写入 =====
+document.getElementById('btnApply').onclick = () => {
+  if (!selectedRegion) return;
+  const newText = document.getElementById('inputText').value;
+  if (!newText) { toast('请输入文字'); return; }
+  
+  pushHistory();
+  const r = selectedRegion;
+  
+  // 先用背景色覆盖原文区域
+  paintOverRegion(r);
+  
+  // 在原图位置写入新文字
+  writeText(r, newText);
+  
+  // 更新region
+  r.text = newText;
+  
+  // 刷新显示
+  drawMain();
+  renderTextOverlays();
+  closeEdit();
+  toast('已写入 ✓');
+};
+
+function paintOverRegion(r) {
+  initHi();
+  // 采样背景色（区域边缘）
+  const pad = 3;
+  const bgColors = [];
+  // 取上方、下方、左侧、右侧边缘颜色
+  const samples = [
+    [r.x0, Math.max(0, r.y0 - pad)],
+    [r.x0, Math.min(imgH - 1, r.y1 + pad)],
+    [Math.max(0, r.x0 - pad), r.y0],
+    [Math.min(imgW - 1, r.x1 + pad), r.y0]
+  ];
+  for (const [sx, sy] of samples) {
+    try {
+      const p = hiCtx.getImageData(sx, sy, 1, 1).data;
+      bgColors.push([p[0], p[1], p[2]]);
+    } catch(e) {}
+  }
+  
+  // 平均背景色
+  let bgR = 0, bgG = 0, bgB = 0;
+  if (bgColors.length) {
+    for (const c of bgColors) { bgR += c[0]; bgG += c[1]; bgB += c[2]; }
+    bgR = Math.round(bgR / bgColors.length);
+    bgG = Math.round(bgG / bgColors.length);
+    bgB = Math.round(bgB / bgColors.length);
+  }
+  
+  // 用背景色填充原文区域
+  const padX = 2, padY = 1;
+  hiCtx.fillStyle = `rgb(${bgR},${bgG},${bgB})`;
+  hiCtx.fillRect(r.x0 - padX, r.y0 - padY, (r.x1 - r.x0) + padX * 2, (r.y1 - r.y0) + padY * 2);
+}
+
+function writeText(r, text) {
+  initHi();
+  hiCtx.save();
+  const fs = editFontSize;
+  hiCtx.font = `${editFontWeight} ${fs}px -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif`;
+  hiCtx.fillStyle = editColor;
+  hiCtx.textBaseline = 'top';
+  // 居中对齐：计算原区域中心
+  const centerX = (r.x0 + r.x1) / 2;
+  const centerY = (r.y0 + r.y1) / 2;
+  const metrics = hiCtx.measureText(text);
+  const textW = metrics.width;
+  const textH = fs;
+  // 左对齐到原位置，垂直居中
+  hiCtx.fillText(text, r.x0, r.y0 + ((r.y1 - r.y0) - textH) / 2);
+  hiCtx.restore();
+}
+
+// 删除原文
+document.getElementById('btnDeleteText').onclick = () => {
+  if (!selectedRegion) return;
+  pushHistory();
+  paintOverRegion(selectedRegion);
+  // 从列表移除
+  const idx = textRegions.indexOf(selectedRegion);
+  if (idx >= 0) textRegions.splice(idx, 1);
+  drawMain();
+  renderTextOverlays();
+  closeEdit();
+  toast('已删除原文 ✓');
+};
+
+// ===== 编辑面板控件 =====
+document.getElementById('fontSizeSlider').oninput = (e) => {
+  editFontSize = parseInt(e.target.value);
+  document.getElementById('fontSizeVal').textContent = editFontSize;
+};
+document.getElementById('fontWeightSlider').oninput = (e) => {
+  editFontWeight = parseInt(e.target.value);
+  const labels = {100:'极细',200:'细',300:'偏细',400:'常规',500:'中',600:'偏粗',700:'粗',800:'特粗',900:'极粗'};
+  document.getElementById('fontWeightVal').textContent = labels[editFontWeight] || '粗';
+};
+
+function setColor(hex) {
+  editColor = hex;
+  document.getElementById('colorPreview').style.background = hex;
+  document.getElementById('colorPicker').value = hex;
+}
+
+document.getElementById('colorPreview').onclick = () => document.getElementById('colorPicker').click();
+document.getElementById('colorPicker').oninput = (e) => setColor(e.target.value);
+document.querySelectorAll('.cdot').forEach(d => d.onclick = () => setColor(d.dataset.c));
+
+document.getElementById('btnCancelEdit').onclick = closeEdit;
+function closeEdit() {
+  document.getElementById('editPanel').style.display = 'none';
+  selectedRegion = null;
+}
+
+// ===== 历史记录 =====
+function pushHistory() {
+  initHi();
+  historyStack.push(hiCtx.getImageData(0, 0, imgW, imgH));
+  if (historyStack.length > MAX_HIST) historyStack.shift();
+}
+
+document.getElementById('btnUndo').onclick = () => {
+  if (historyStack.length < 1) { toast('没有可撤销的'); return; }
+  const prev = historyStack.pop();
+  initHi();
+  hiCtx.putImageData(prev, 0, 0);
+  drawMain();
+  // 重新OCR
+  toast('已撤销');
+};
+
+// ===== 重识别 =====
+document.getElementById('btnReOCR').onclick = () => {
+  if (!img) return;
+  // 先把当前hiCanvas作为新图重新识别
+  initHi();
+  const tempImg = new Image();
+  tempImg.onload = () => { img = tempImg; runOCR(); };
+  tempImg.src = hiCanvas.toDataURL();
+};
+
+// ===== 保存 =====
+document.getElementById('btnSave').onclick = () => {
+  if (!img) return;
+  initHi();
+  const link = document.createElement('a');
+  link.download = 'P图结果_' + Date.now() + '.png';
+  link.href = hiCanvas.toDataURL('image/png');
+  link.click();
+  toast('已保存 📸');
+};
+
+// ===== 点击空白关闭编辑 =====
+mainCanvas.addEventListener('click', () => closeEdit());
+
+// ===== Toast =====
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('show'); void t.offsetWidth;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ===== Resize =====
+window.addEventListener('resize', () => {
+  if (!img) return;
+  initHi();
+  setupCanvas();
+  if (textRegions.length) renderTextOverlays();
+});
+</script>
+</body>
+</html>
