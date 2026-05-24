@@ -9,54 +9,48 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#e0e0e0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;touch-action:none}
 
-/* 顶部栏 */
 .topbar{position:fixed;top:0;left:0;right:0;height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#111;border-bottom:1px solid #333;z-index:10}
-.topbar h1{font-size:15px;color:#ff6b00;text-shadow:0 0 10px rgba(255,107,0,.5)}
+.topbar h1{font-size:15px;color:#ff6b00;text-shadow:0 0 8px rgba(255,107,0,.4)}
 .topbar-btns{display:flex;gap:5px}
 .tbtn{background:#222;border:1px solid #444;color:#ddd;padding:5px 10px;border-radius:5px;font-size:12px;cursor:pointer}
 .tbtn:active{background:#ff6b00;color:#000;border-color:#ff6b00}
 .tbtn.primary{background:#ff6b00;color:#000;border-color:#ff6b00;font-weight:bold}
 
-/* 图片容器 */
-.img-wrap{position:fixed;top:44px;left:0;right:0;bottom:0;background:#111;overflow:hidden}
-.img-wrap canvas{position:absolute;top:0;left:0}
+.img-wrap{position:fixed;top:44px;left:0;right:0;bottom:0;background:#111;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#photo{max-width:100%;max-height:100%;display:block;object-fit:contain}
 
-/* 上传遮罩 */
-.upload-mask{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.9);z-index:15}
+.upload-mask{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.92);z-index:15}
 .upload-mask .icon{font-size:56px;margin-bottom:12px}
 .upload-mask p{color:#888;font-size:13px;margin-top:8px}
 .big-btn{background:#ff6b00;color:#000;font-size:17px;font-weight:bold;padding:14px 40px;border:none;border-radius:10px;cursor:pointer;box-shadow:0 0 20px rgba(255,107,0,.4)}
 
 /* 文字框 */
-.text-overlay{position:absolute;cursor:pointer;border:2px dashed transparent;border-radius:2px;z-index:5;background:transparent;transition:all .15s}
-.text-overlay.active{border-color:#ff6b00;background:rgba(255,107,0,.15)}
-.text-overlay .lbl{position:absolute;top:-16px;left:0;font-size:9px;background:#ff6b00;color:#000;padding:1px 4px;border-radius:2px;white-space:nowrap;pointer-events:none}
+.tbox{position:absolute;border:2px dashed rgba(255,107,0,.6);border-radius:2px;cursor:pointer;z-index:5;background:rgba(255,107,0,.05);transition:background .15s}
+.tbox:active,.tbox.sel{border-color:#ff6b00;background:rgba(255,107,0,.2)}
+.tbox .tl{position:absolute;top:-15px;left:0;font-size:9px;background:#ff6b00;color:#000;padding:1px 4px;border-radius:2px;white-space:nowrap;pointer-events:none}
 
-/* 编辑面板 */
 .edit-panel{position:fixed;bottom:0;left:0;right:0;background:#181818;border-top:2px solid #ff6b00;padding:10px 12px;z-index:20;display:none;animation:slideUp .2s ease}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .edit-panel .row{display:flex;align-items:center;gap:6px;margin-bottom:7px}
-.edit-panel .row:last-child{margin-bottom:0}
 .edit-panel label{font-size:12px;color:#999;min-width:36px}
 .edit-panel input[type=text]{flex:1;background:#1a1a1a;border:1px solid #444;color:#fff;padding:7px 10px;border-radius:6px;font-size:16px;outline:none}
 .edit-panel input[type=text]:focus{border-color:#ff6b00}
 .edit-panel input[type=range]{flex:1;accent-color:#ff6b00;height:24px}
 .edit-panel .val{font-size:12px;color:#ff6b00;min-width:24px;text-align:right}
-.orig-info{font-size:11px;color:#888;margin-bottom:6px;padding:4px 8px;background:#1a1a1a;border-radius:4px}
-.orig-info b{color:#ff6b00}
+.oinfo{font-size:11px;color:#888;margin-bottom:6px;padding:4px 8px;background:#1a1a1a;border-radius:4px}
+.oinfo b{color:#ff6b00}
 .cdot{width:22px;height:22px;border-radius:50%;border:2px solid #555;cursor:pointer;flex-shrink:0}
 .cdot:active{border-color:#ff6b00}
 .cpreview{width:22px;height:22px;border-radius:50%;border:2px solid #ff6b00;flex-shrink:0}
 .btn-row{display:flex;gap:6px;justify-content:flex-end;margin-top:4px}
 
-/* 进度 */
 .progress-bar{position:fixed;top:44px;left:0;right:0;height:3px;background:#222;z-index:12;display:none}
 .progress-bar .fill{height:100%;background:#ff6b00;width:0%;transition:width .3s}
 .progress-text{position:fixed;top:54px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.9);color:#ff6b00;font-size:13px;padding:6px 16px;border-radius:20px;z-index:12;display:none;white-space:nowrap}
 
 .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(255,107,0,.95);color:#000;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:bold;z-index:99;display:none;white-space:nowrap}
-.toast.show{display:block;animation:toastA 1.8s ease}
-@keyframes toastA{0%{opacity:0;transform:translateX(-50%) translateY(10px)}10%{opacity:1;transform:translateX(-50%) translateY(0)}85%{opacity:1}100%{opacity:0}}
+.toast.show{display:block;animation:ta 1.8s ease}
+@keyframes ta{0%{opacity:0;transform:translateX(-50%) translateY(10px)}10%{opacity:1;transform:translateX(-50%) translateY(0)}85%{opacity:1}100%{opacity:0}}
 
 #fileInput{display:none}
 </style>
@@ -78,14 +72,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#e0e0e0;f
     <button class="big-btn" id="btnUpload">上传图片</button>
     <p>自动识别文字，点击即可修改</p>
   </div>
-  <canvas id="mainCanvas"></canvas>
+  <img id="photo" src="" alt="">
 </div>
 
 <div class="progress-bar" id="progressBar"><div class="fill" id="progressFill"></div></div>
 <div class="progress-text" id="progressText"></div>
 
 <div class="edit-panel" id="editPanel">
-  <div class="orig-info" id="origInfo">原文：<b id="origText">-</b> ｜ 字号：<b id="origSize">-</b> ｜ 颜色：<b id="origColor">-</b></div>
+  <div class="oinfo">原文：<b id="origText">-</b> ｜ 字号：<b id="origSize">-</b> ｜ 颜色：<b id="origColor">-</b></div>
   <div class="row">
     <label>新文字</label>
     <input type="text" id="inputText" placeholder="输入替换内容">
@@ -122,34 +116,23 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#e0e0e0;f
 
 <script>
 const $ = id => document.getElementById(id);
-const canvas = $('mainCanvas');
-const ctx = canvas.getContext('2d');
+const photo = $('photo');
 const wrap = $('imgWrap');
 
 let img = null, imgW = 0, imgH = 0;
-let dispScale = 1, offX = 0, offY = 0;
+let imgDataUrl = ''; // 当前图片的dataURL（编辑后的）
 let textRegions = [];
-let selectedIdx = -1;
-let editColor = '#ffffff', editFontSize = 24, editFontWeight = 700;
+let selIdx = -1;
+let editColor = '#fff', editFontSize = 24, editFontWeight = 700;
 let histStack = [];
 const MAX_HIST = 15;
-
-// 离屏高清canvas
-let hiC = null, hiX = null;
-function initHi() {
-  if (!hiC) { hiC = document.createElement('canvas'); hiX = hiC.getContext('2d'); }
-  if (img && (hiC.width !== imgW || hiC.height !== imgH)) {
-    hiC.width = imgW; hiC.height = imgH;
-    hiX.drawImage(img, 0, 0, imgW, imgH);
-  }
-}
 
 // ===== 上传 =====
 $('btnUpload').onclick = () => $('fileInput').click();
 $('fileInput').onchange = e => { if (e.target.files[0]) loadFile(e.target.files[0]); };
 document.addEventListener('paste', e => {
-  for (const item of (e.clipboardData?.items || []))
-    if (item.type.startsWith('image/')) { loadFile(item.getAsFile()); break; }
+  for (const it of (e.clipboardData?.items || []))
+    if (it.type.startsWith('image/')) { loadFile(it.getAsFile()); break; }
 });
 
 function loadFile(f) {
@@ -158,37 +141,27 @@ function loadFile(f) {
     const i = new Image();
     i.onload = () => {
       img = i; imgW = i.naturalWidth; imgH = i.naturalHeight;
-      hiC = null; hiX = null; // 重置
-      initHi();
+      imgDataUrl = ev.target.result;
+      photo.src = imgDataUrl;
       $('uploadMask').style.display = 'none';
-      resizeCanvas();
+      histStack = [];
       pushHist();
-      runOCR();
+      // 等图片渲染完再OCR
+      setTimeout(() => runOCR(), 300);
     };
     i.src = ev.target.result;
   };
   r.readAsDataURL(f);
 }
 
-function resizeCanvas() {
-  const ww = wrap.clientWidth, wh = wrap.clientHeight;
-  canvas.width = ww; canvas.height = wh;
-  canvas.style.width = ww + 'px'; canvas.style.height = wh + 'px';
-  dispScale = Math.min(ww / imgW, wh / imgH);
-  const dw = imgW * dispScale, dh = imgH * dispScale;
-  offX = (ww - dw) / 2; offY = (wh - dh) / 2;
-  render();
-}
-
-function render() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#111';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  if (hiC) {
-    ctx.drawImage(hiC, offX, offY, imgW * dispScale, imgH * dispScale);
-  } else if (img) {
-    ctx.drawImage(img, offX, offY, imgW * dispScale, imgH * dispScale);
-  }
+// ===== 获取图片在页面中的实际显示位置和缩放 =====
+function getImgRect() {
+  const wr = wrap.getBoundingClientRect();
+  const ww = wr.width, wh = wr.height;
+  const sx = ww / imgW, sy = wh / imgH;
+  const s = Math.min(sx, sy);
+  const dw = imgW * s, dh = imgH * s;
+  return { s, dx: (ww - dw) / 2, dy: (wh - dh) / 2, dw, dh };
 }
 
 // ===== OCR =====
@@ -203,9 +176,9 @@ async function runOCR() {
     const result = await Tesseract.recognize(img, 'chi_sim+eng', {
       logger: m => {
         if (m.status === 'recognizing text') {
-          const pct = Math.round((m.progress || 0) * 100);
-          $('progressFill').style.width = pct + '%';
-          $('progressText').textContent = '🔍 识别中 ' + pct + '%';
+          const p = Math.round((m.progress || 0) * 100);
+          $('progressFill').style.width = p + '%';
+          $('progressText').textContent = '🔍 识别中 ' + p + '%';
         }
       }
     });
@@ -221,9 +194,7 @@ async function runOCR() {
       });
     }
     // 取色
-    initHi();
     for (const r of textRegions) r.color = sampleColor(r);
-
     $('progressBar').style.display = 'none';
     $('progressText').style.display = 'none';
     renderOverlays();
@@ -231,13 +202,17 @@ async function runOCR() {
   } catch(e) {
     $('progressBar').style.display = 'none';
     $('progressText').style.display = 'none';
-    toast('识别失败，请重试');
+    toast('识别失败');
     console.error(e);
   }
 }
 
 function sampleColor(r) {
-  initHi();
+  // 用临时canvas采样
+  const tc = document.createElement('canvas');
+  tc.width = imgW; tc.height = imgH;
+  const tx = tc.getContext('2d');
+  tx.drawImage(img, 0, 0, imgW, imgH);
   try {
     const cx = Math.round((r.x0 + r.x1) / 2);
     const cy = Math.round((r.y0 + r.y1) / 2);
@@ -245,69 +220,51 @@ function sampleColor(r) {
     const sh = Math.max(1, Math.round((r.y1 - r.y0) * 0.5));
     const sx = Math.max(0, cx - Math.round(sw / 2));
     const sy = Math.max(0, cy - Math.round(sh / 2));
-    const data = hiX.getImageData(sx, sy, Math.min(sw, imgW - sx), Math.min(sh, imgH - sy)).data;
-    // 采样文字颜色：找最不接近背景的像素
-    // 先估算背景色（边缘像素）
-    let bgR = 0, bgG = 0, bgB = 0, bgN = 0;
-    // 再找文字色（最不同的）
-    let bestR = 255, bestG = 255, bestB = 255, maxDist = 0;
-    const step = 4;
-    for (let i = 0; i < data.length; i += step * 4) {
-      const pr = data[i], pg = data[i+1], pb = data[i+2], pa = data[i+3];
-      if (pa < 128) continue;
-      // 累计背景
-      bgR += pr; bgG += pg; bgB += pb; bgN++;
+    const data = tx.getImageData(sx, sy, Math.min(sw, imgW - sx), Math.min(sh, imgH - sy)).data;
+    // 估算背景色
+    let bgR = 0, bgG = 0, bgB = 0, n = 0;
+    for (let i = 0; i < data.length; i += 16) { bgR += data[i]; bgG += data[i+1]; bgB += data[i+2]; n++; }
+    if (n) { bgR = Math.round(bgR/n); bgG = Math.round(bgG/n); bgB = Math.round(bgB/n); }
+    // 找最不同的颜色=文字色
+    let br = 255, bg2 = 255, bb = 255, maxD = 0;
+    for (let i = 0; i < data.length; i += 16) {
+      const d = Math.abs(data[i]-bgR) + Math.abs(data[i+1]-bgG) + Math.abs(data[i+2]-bgB);
+      if (d > maxD) { maxD = d; br = data[i]; bg2 = data[i+1]; bb = data[i+2]; }
     }
-    if (bgN > 0) {
-      bgR = Math.round(bgR / bgN); bgG = Math.round(bgG / bgN); bgB = Math.round(bgB / bgN);
-    }
-    for (let i = 0; i < data.length; i += step * 4) {
-      const pr = data[i], pg = data[i+1], pb = data[i+2], pa = data[i+3];
-      if (pa < 128) continue;
-      const dist = Math.abs(pr - bgR) + Math.abs(pg - bgG) + Math.abs(pb - bgB);
-      if (dist > maxDist) { maxDist = dist; bestR = pr; bestG = pg; bestB = pb; }
-    }
-    return '#' + [bestR, bestG, bestB].map(v => Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0')).join('');
-  } catch(e) {
-    return '#ffffff';
-  }
+    return '#' + [br, bg2, bb].map(v => Math.max(0,Math.min(255,v)).toString(16).padStart(2,'0')).join('');
+  } catch(e) { return '#ffffff'; }
 }
 
-// ===== 文字框overlay =====
+// ===== 文字框 =====
 function renderOverlays() {
   clearOverlays();
+  const rc = getImgRect();
   for (let i = 0; i < textRegions.length; i++) {
     const r = textRegions[i];
     const el = document.createElement('div');
-    el.className = 'text-overlay';
+    el.className = 'tbox';
     el.dataset.idx = i;
-    const dx = r.x0 * dispScale + offX;
-    const dy = r.y0 * dispScale + offY;
-    const dw = (r.x1 - r.x0) * dispScale;
-    const dh = (r.y1 - r.y0) * dispScale;
-    el.style.cssText = `left:${dx}px;top:${dy}px;width:${dw}px;height:${dh}px`;
-    el.innerHTML = `<span class="lbl">${r.text}</span>`;
+    const left = rc.dx + r.x0 * rc.s;
+    const top = rc.dy + r.y0 * rc.s;
+    const w = (r.x1 - r.x0) * rc.s;
+    const h = (r.y1 - r.y0) * rc.s;
+    el.style.cssText = `left:${left}px;top:${top}px;width:${w}px;height:${h}px`;
+    el.innerHTML = `<span class="tl">${r.text}</span>`;
     el.addEventListener('click', e => { e.stopPropagation(); selectRegion(i); });
     wrap.appendChild(el);
   }
 }
-function clearOverlays() {
-  wrap.querySelectorAll('.text-overlay').forEach(el => el.remove());
-}
+function clearOverlays() { wrap.querySelectorAll('.tbox').forEach(el => el.remove()); }
 
-// ===== 选择编辑 =====
+// 窗口resize时重新定位overlay
+window.addEventListener('resize', () => { if (textRegions.length) renderOverlays(); });
+
+// ===== 选择 =====
 function selectRegion(idx) {
-  selectedIdx = idx;
+  selIdx = idx;
   const r = textRegions[idx];
-  editColor = r.color;
-  editFontSize = r.fontSize;
-  editFontWeight = 700;
-
-  // 高亮选中框
-  wrap.querySelectorAll('.text-overlay').forEach((el, i) => {
-    el.classList.toggle('active', i === idx);
-  });
-
+  editColor = r.color; editFontSize = r.fontSize; editFontWeight = 700;
+  wrap.querySelectorAll('.tbox').forEach((el, i) => el.classList.toggle('sel', i === idx));
   $('origText').textContent = r.text;
   $('origSize').textContent = r.fontSize + 'px';
   $('origColor').textContent = r.color;
@@ -321,133 +278,167 @@ function selectRegion(idx) {
   $('inputText').focus();
 }
 
-// ===== 写入 =====
+// ===== 写入（在原图上操作） =====
 $('btnApply').onclick = () => {
-  if (selectedIdx < 0) return;
+  if (selIdx < 0) return;
   const newText = $('inputText').value;
   if (!newText) { toast('请输入文字'); return; }
   pushHist();
-  const r = textRegions[selectedIdx];
-  paintOver(r);
-  writeNew(r, newText);
+  const r = textRegions[selIdx];
+  applyEdit(r, newText);
   r.text = newText;
-  render();
-  renderOverlays();
   closeEdit();
   toast('已写入 ✓');
 };
 
-function paintOver(r) {
-  initHi();
-  // 取边缘背景色
+function applyEdit(r, newText) {
+  // 在原图canvas上操作
+  const tc = document.createElement('canvas');
+  tc.width = imgW; tc.height = imgH;
+  const tx = tc.getContext('2d');
+  // 先画当前图片
+  const curImg = new Image();
+  // 同步操作：用imgDataUrl
+  // 但Image加载是异步的... 改用离屏canvas缓存
+  tx.drawImage(img, 0, 0, imgW, imgH);
+  
+  // 背景色填充覆盖原文
   const pad = 4;
-  const edges = [];
-  const samples = [
+  const edges = [
     [Math.max(0, r.x0 - pad), r.y0],
     [Math.min(imgW - 1, r.x1 + pad), r.y0],
     [r.x0, Math.max(0, r.y0 - pad)],
     [r.x0, Math.min(imgH - 1, r.y1 + pad)],
   ];
-  for (const [sx, sy] of samples) {
-    try {
-      const p = hiX.getImageData(sx, sy, 1, 1).data;
-      edges.push([p[0], p[1], p[2]]);
-    } catch(e) {}
-  }
   let bgR = 128, bgG = 128, bgB = 128;
-  if (edges.length) {
-    bgR = Math.round(edges.reduce((s, c) => s + c[0], 0) / edges.length);
-    bgG = Math.round(edges.reduce((s, c) => s + c[1], 0) / edges.length);
-    bgB = Math.round(edges.reduce((s, c) => s + c[2], 0) / edges.length);
-  }
-  // 填充背景覆盖原文
-  hiX.fillStyle = `rgb(${bgR},${bgG},${bgB})`;
-  hiX.fillRect(r.x0 - 2, r.y0 - 1, (r.x1 - r.x0) + 4, (r.y1 - r.y0) + 2);
-}
-
-function writeNew(r, text) {
-  initHi();
-  hiX.save();
+  try {
+    const ec = [];
+    for (const [sx, sy] of edges) {
+      const p = tx.getImageData(sx, sy, 1, 1).data;
+      ec.push([p[0], p[1], p[2]]);
+    }
+    bgR = Math.round(ec.reduce((s,c) => s+c[0], 0) / ec.length);
+    bgG = Math.round(ec.reduce((s,c) => s+c[1], 0) / ec.length);
+    bgB = Math.round(ec.reduce((s,c) => s+c[2], 0) / ec.length);
+  } catch(e) {}
+  tx.fillStyle = `rgb(${bgR},${bgG},${bgB})`;
+  tx.fillRect(r.x0 - 2, r.y0 - 1, (r.x1 - r.x0) + 4, (r.y1 - r.y0) + 2);
+  
+  // 写新文字
+  tx.save();
   const fs = editFontSize;
-  hiX.font = `${editFontWeight} ${fs}px -apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif`;
-  hiX.fillStyle = editColor;
-  hiX.textBaseline = 'top';
-  hiX.fillText(text, r.x0, r.y0 + ((r.y1 - r.y0) - fs) / 2);
-  hiX.restore();
+  tx.font = `${editFontWeight} ${fs}px -apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif`;
+  tx.fillStyle = editColor;
+  tx.textBaseline = 'top';
+  tx.fillText(newText, r.x0, r.y0 + ((r.y1 - r.y0) - fs) / 2);
+  tx.restore();
+  
+  // 更新图片
+  imgDataUrl = tc.toDataURL('image/png');
+  photo.src = imgDataUrl;
+  // 更新img对象用于后续操作
+  const newImg = new Image();
+  newImg.onload = () => { img = newImg; };
+  newImg.src = imgDataUrl;
+  // 重新渲染overlay
+  renderOverlays();
 }
 
 // 删除原文
 $('btnDeleteText').onclick = () => {
-  if (selectedIdx < 0) return;
+  if (selIdx < 0) return;
   pushHist();
-  paintOver(textRegions[selectedIdx]);
-  textRegions.splice(selectedIdx, 1);
-  render();
-  renderOverlays();
+  const r = textRegions[selIdx];
+  applyDelete(r);
+  textRegions.splice(selIdx, 1);
   closeEdit();
   toast('已删除 ✓');
 };
 
-// ===== 编辑面板控件 =====
-$('fontSizeSlider').oninput = e => { editFontSize = +e.target.value; $('fontSizeVal').textContent = editFontSize; };
-$('fontWeightSlider').oninput = e => {
-  editFontWeight = +e.target.value;
-  const labels = {100:'极细',200:'细',300:'偏细',400:'常规',500:'中',600:'偏粗',700:'粗',800:'特粗',900:'极粗'};
-  $('fontWeightVal').textContent = labels[editFontWeight] || '粗';
-};
+function applyDelete(r) {
+  const tc = document.createElement('canvas');
+  tc.width = imgW; tc.height = imgH;
+  const tx = tc.getContext('2d');
+  tx.drawImage(img, 0, 0, imgW, imgH);
+  
+  const pad = 4;
+  const edges = [
+    [Math.max(0, r.x0 - pad), r.y0],
+    [Math.min(imgW - 1, r.x1 + pad), r.y0],
+    [r.x0, Math.max(0, r.y0 - pad)],
+    [r.x0, Math.min(imgH - 1, r.y1 + pad)],
+  ];
+  let bgR = 128, bgG = 128, bgB = 128;
+  try {
+    const ec = [];
+    for (const [sx, sy] of edges) {
+      const p = tx.getImageData(sx, sy, 1, 1).data;
+      ec.push([p[0], p[1], p[2]]);
+    }
+    bgR = Math.round(ec.reduce((s,c) => s+c[0], 0) / ec.length);
+    bgG = Math.round(ec.reduce((s,c) => s+c[1], 0) / ec.length);
+    bgB = Math.round(ec.reduce((s,c) => s+c[2], 0) / ec.length);
+  } catch(e) {}
+  tx.fillStyle = `rgb(${bgR},${bgG},${bgB})`;
+  tx.fillRect(r.x0 - 2, r.y0 - 1, (r.x1 - r.x0) + 4, (r.y1 - r.y0) + 2);
+  
+  imgDataUrl = tc.toDataURL('image/png');
+  photo.src = imgDataUrl;
+  const newImg = new Image();
+  newImg.onload = () => { img = newImg; };
+  newImg.src = imgDataUrl;
+  renderOverlays();
+}
+
+// ===== 颜色/字号/粗细 =====
 function setColor(hex) { editColor = hex; $('colorPreview').style.background = hex; $('colorPicker').value = hex; }
 $('colorPreview').onclick = () => $('colorPicker').click();
 $('colorPicker').oninput = e => setColor(e.target.value);
 document.querySelectorAll('.cdot').forEach(d => d.onclick = () => setColor(d.dataset.c));
+$('fontSizeSlider').oninput = e => { editFontSize = +e.target.value; $('fontSizeVal').textContent = editFontSize; };
+$('fontWeightSlider').oninput = e => {
+  editFontWeight = +e.target.value;
+  const lb = {100:'极细',200:'细',300:'偏细',400:'常规',500:'中',600:'偏粗',700:'粗',800:'特粗',900:'极粗'};
+  $('fontWeightVal').textContent = lb[editFontWeight] || '粗';
+};
 $('btnCancelEdit').onclick = closeEdit;
-function closeEdit() { $('editPanel').style.display = 'none'; selectedIdx = -1; wrap.querySelectorAll('.text-overlay').forEach(el => el.classList.remove('active')); }
+function closeEdit() { $('editPanel').style.display = 'none'; selIdx = -1; wrap.querySelectorAll('.tbox').forEach(el => el.classList.remove('sel')); }
 
-// 点击空白关闭
-canvas.addEventListener('click', closeEdit);
+// 点击空白
+wrap.addEventListener('click', e => { if (e.target === wrap || e.target === photo) closeEdit(); });
 
-// ===== 历史记录 =====
-function pushHist() { initHi(); histStack.push(hiX.getImageData(0, 0, imgW, imgH)); if (histStack.length > MAX_HIST) histStack.shift(); }
+// ===== 历史 =====
+function pushHist() { histStack.push(imgDataUrl); if (histStack.length > MAX_HIST) histStack.shift(); }
 $('btnUndo').onclick = () => {
-  if (!histStack.length) { toast('没有可撤销的'); return; }
-  initHi();
-  hiX.putImageData(histStack.pop(), 0, 0);
-  render();
+  if (histStack.length < 1) { toast('没有可撤销的'); return; }
+  imgDataUrl = histStack.pop();
+  photo.src = imgDataUrl;
+  const i = new Image();
+  i.onload = () => { img = i; runOCR(); };
+  i.src = imgDataUrl;
   toast('已撤销');
 };
 
 // ===== 重识别 =====
-$('btnReOCR').onclick = () => {
-  if (!hiC) return;
-  const tmp = new Image();
-  tmp.onload = () => { img = tmp; runOCR(); };
-  tmp.src = hiC.toDataURL();
-};
+$('btnReOCR').onclick = () => { if (img) runOCR(); };
 
 // ===== 保存 =====
 $('btnSave').onclick = () => {
-  if (!hiC) return;
+  if (!img) return;
   const a = document.createElement('a');
   a.download = 'P图结果_' + Date.now() + '.png';
-  a.href = hiC.toDataURL('image/png');
+  a.href = imgDataUrl;
   a.click();
   toast('已保存 📸');
 };
 
 // ===== Toast =====
 function toast(msg) {
-  const t = $('toast');
-  t.textContent = msg;
+  const t = $('toast'); t.textContent = msg;
   t.classList.remove('show'); void t.offsetWidth;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2000);
 }
-
-// ===== Resize =====
-window.addEventListener('resize', () => {
-  if (!img) return;
-  resizeCanvas();
-  if (textRegions.length) renderOverlays();
-});
 </script>
 </body>
 </html>
